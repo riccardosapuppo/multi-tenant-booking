@@ -8,7 +8,7 @@
     "build": "npm run build:api && npm run build:web",
     "build:api": "tsc --noEmit -p apps/api/tsconfig.json && esbuild apps/api/src/main.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/api/main.js",
     "build:web": "ng build multi-tenant-booking",
-    "test": "vitest run"
+    "test": "tsc --noEmit -p tsconfig.test.json && vitest run"
   },
   "dependencies": {
     "@angular/common": "19.1.7",
