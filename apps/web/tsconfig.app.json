@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "outDir": "../../dist/out-tsc/web"
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.d.ts", "../../packages/contracts/src/**/*.ts"]
+}

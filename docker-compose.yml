@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: booking_demo
+      POSTGRES_PASSWORD: booking_demo_password
+      POSTGRES_DB: tenant_registry
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_demo -d tenant_registry"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ./database/postgres:/docker-entrypoint-initdb.d:ro
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      PORT: 3000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: booking_demo
+      POSTGRES_PASSWORD: booking_demo_password
+      REGISTRY_DATABASE: tenant_registry
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "4200:80"
