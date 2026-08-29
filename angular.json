@@ -18,7 +18,8 @@
             "polyfills": ["zone.js"],
             "tsConfig": "apps/web/tsconfig.app.json",
             "assets": [{ "glob": "**/*", "input": "apps/web/public" }],
-            "styles": ["apps/web/src/styles.css"]
+            "styles": ["apps/web/src/styles.css"],
+            "serviceWorker": "ngsw-config.json"
           },
           "configurations": {
             "production": {

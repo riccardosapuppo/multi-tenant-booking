@@ -1,0 +1,96 @@
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Multi-Tenant Booking home">
+      <span class="brand-mark">M</span>
+      <span>Multi-Tenant Booking</span>
+    </a>
+    <span class="synthetic-badge">Synthetic demo data</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">One service. Isolated databases.</p>
+        <h1>Book a slot without crossing tenant boundaries.</h1>
+        <p class="hero-copy">
+          Every request is resolved to a registered center before a database connection is selected.
+          Switch centers to see the same API return different, isolated records.
+        </p>
+      </div>
+      <div class="architecture-card">
+        <span>Request</span><i>→</i><span>Tenant registry</span><i>→</i><strong>Dedicated database</strong>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="tenant-panel">
+        <p class="section-label">Demo centers</p>
+        <div class="tenant-list">
+          @for (tenant of tenants(); track tenant.id) {
+            <button type="button" class="tenant-button" [class.active]="tenant.slug === selectedSlug()"
+              (click)="loadTenant(tenant.slug)">
+              <span class="tenant-initial">{{ tenant.displayName.slice(-1) }}</span>
+              <span><strong>{{ tenant.displayName }}</strong><small>booking_{{ tenant.slug }}</small></span>
+            </button>
+          }
+        </div>
+
+        <div class="routing-card">
+          <p>Primary routing context</p>
+          <code>X-Tenant-Slug: {{ selectedSlug() }}</code>
+          <small>The API rejects a conflicting subdomain.</small>
+        </div>
+      </aside>
+
+      <section class="booking-panel">
+        @if (loading()) {
+          <div class="state-card">Loading this tenant's database…</div>
+        } @else {
+          @if (snapshot(); as state) {
+            <div class="panel-heading">
+            <div>
+              <p class="section-label">Current tenant</p>
+              <h2>{{ state.tenant.displayName }}</h2>
+            </div>
+            <div class="metric"><strong>{{ availableCount() }}</strong><span>slots available</span></div>
+          </div>
+
+          @if (notice()) { <p class="message success" role="status">{{ notice() }}</p> }
+          @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+
+            <div class="slot-grid">
+            @for (slot of state.slots; track slot.id) {
+              <article class="slot-card" [class.booked]="!slot.available">
+                <div class="slot-time">
+                  <strong>{{ slot.startAt | date:'HH:mm':'UTC' }}</strong>
+                  <span>{{ slot.startAt | date:'EEE, MMM d':'UTC' }}</span>
+                </div>
+                <div class="slot-details">
+                  <span class="status" [class.available]="slot.available">
+                    {{ slot.available ? 'Available' : 'Booked' }}
+                  </span>
+                  <h3>{{ slot.service }}</h3>
+                  <p>{{ slot.durationMinutes }} minutes · {{ state.tenant.displayName }}</p>
+                </div>
+                @if (bookingFor(slot); as booking) {
+                  <button type="button" class="secondary-button" [disabled]="workingId() === booking.id"
+                    (click)="cancel(booking)">
+                    {{ workingId() === booking.id ? 'Cancelling…' : 'Cancel booking' }}
+                  </button>
+                } @else {
+                  <button type="button" class="primary-button" [disabled]="!slot.available || workingId() === slot.id"
+                    (click)="book(slot)">
+                    {{ workingId() === slot.id ? 'Booking…' : 'Book slot' }}
+                  </button>
+                }
+              </article>
+            }
+            </div>
+          } @else {
+            <div class="state-card error">{{ error() }}</div>
+          }
+        }
+      </section>
+    </section>
+  </main>
+</div>
