@@ -2,7 +2,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY tsconfig.json angular.json ./
+COPY tsconfig.json angular.json ngsw-config.json ./
 COPY apps/web ./apps/web
 COPY packages ./packages
 RUN npm run build:web
