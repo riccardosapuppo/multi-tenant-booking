@@ -80,6 +80,8 @@ The CI workflow runs `npm ci`, `npm run build` and `npm test` on every push and 
 
 Tenant resolution is routing, not authorization. This demo lets a caller select a synthetic tenant so the mechanism is easy to inspect. In production, `X-Tenant-Slug` must be set by a trusted gateway and checked against the authenticated identity; accepting it directly from an untrusted client would allow tenant switching.
 
+After all non-major production fixes, `npm audit --omit=dev` retains six high-severity Angular 19 package findings; the two advisories attached directly to `@angular/core` are **Client Hydration DOM Clobbering & Response-Cache Poisoning** and **Angular i18n XSS via event-handler attributes**, and clearing the remaining Angular findings requires a deliberate migration to Angular 22.
+
 The repository intentionally excludes patient identities, health records, SSN and prescription flows, payments, Wallet passes, email, notifications and integration with a real management system. It also omits a tenant-provisioning UI, per-tenant schema customization, offline booking mutations, high availability, backups, distributed pool invalidation and concurrent migration coordination. Those features would enlarge the product without strengthening the database-routing demonstration.
 
 The three centers, services, timestamps and bookings are synthetic. The project is an architectural demo, not a production appointment system or a security-audited authorization layer.
