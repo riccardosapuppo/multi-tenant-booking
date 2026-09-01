@@ -14,11 +14,16 @@
 #
 # Non vale per i nomi aziendali e per le chiavi vere: quelli bloccano comunque,
 # da qualunque file.
+#
+# Nota per chi scrive qui: le motivazioni non devono riprodurre il codice che
+# scusano. Questo file viene esaminato come tutti gli altri, e una motivazione
+# che cita la riga incriminata si fa segnalare da sola.
 
 docker-compose.yml                       # password del PostgreSQL usa-e-getta della dimostrazione
 .github/workflows/ci.yml                 # la stessa, per il servizio PostgreSQL della CI
 backend/db/pools.js                      # legge POSTGRES_PASSWORD dall'ambiente, con un default per la demo
-backend/auth/routes.js                   # `const password = String(req.body?.password)`: una variabile, non un valore
+backend/auth/routes.js                   # una variabile che riceve il valore inviato dal client, non un valore scritto qui
+web/src/app/shell/api.service.ts         # la firma del metodo che manda le credenziali all'API
 backend/auth/passwords.js                # il testo "a password must be at least 8 characters"
 backend/seed/demo.js                     # le quattro password dimostrative, documentate nel README
 web/src/app/auth/sign-in.component.ts    # le stesse, come pulsanti sulla pagina di accesso
