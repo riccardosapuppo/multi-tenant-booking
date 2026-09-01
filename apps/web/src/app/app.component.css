@@ -76,3 +76,15 @@ button:disabled { cursor: default; opacity: .55; }
   .slot-card { grid-template-columns: 78px 1fr; gap: 14px; }
   .slot-card button { grid-column: 1 / -1; }
 }
+
+/* Quiet on purpose: it belongs on the page, not in the way of it. */
+.colophon {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.5rem 2rem 2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  opacity: 0.5;
+}

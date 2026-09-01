@@ -1,3 +1,4 @@
+export { VERSION, AUTHOR } from './version.js';
 export interface TenantSummary {
   id: string;
   slug: string;

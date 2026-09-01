@@ -5,6 +5,7 @@ import express, {
   type Response,
 } from 'express';
 
+import { AUTHOR, VERSION } from '../../../../packages/contracts/src/index.js';
 import type { CreateBookingRequest } from '../../../../packages/contracts/src/index.js';
 import {
   BookingNotFoundError,
@@ -37,7 +38,9 @@ export function createApp(catalog: TenantCatalog, bookings: BookingService) {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '16kb' }));
 
-  app.get('/api/health', (_request, response) => response.json({ status: 'ok' }));
+  app.get('/api/health', (_request, response) =>
+    response.json({ status: 'ok', version: VERSION, author: AUTHOR })
+  );
   app.get('/api/tenants', asyncHandler(async (_request, response) => {
     const tenants = await catalog.list();
     response.json(tenants.map(({ id, slug, displayName }) => ({ id, slug, displayName })));

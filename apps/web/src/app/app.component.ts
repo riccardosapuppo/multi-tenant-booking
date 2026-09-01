@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 
+import { AUTHOR, VERSION } from '../../../../packages/contracts/src/index';
 import type {
   Booking,
   BookingSlot,
@@ -17,6 +18,9 @@ import { BookingApiService } from './booking-api.service';
   styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
+  readonly version = VERSION;
+  readonly author = AUTHOR;
+
   readonly tenants = signal<TenantSummary[]>([]);
   readonly selectedSlug = signal('alpha');
   readonly snapshot = signal<TenantSnapshot | null>(null);
