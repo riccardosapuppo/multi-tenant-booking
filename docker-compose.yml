@@ -26,6 +26,15 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       PORT: 3000
+      # A centre's opening hours are local hours. Without this the container
+      # runs in UTC, a session stored as 09:00 goes out as 09:00Z, and a
+      # browser in Rome shows the first appointment of the day at 11:00 — which
+      # is what the first screenshot of the booking screen showed.
+      #
+      # The register carries a timezone per centre and the honest limit is
+      # written down in booking/availability.js: the demonstration computes in
+      # the process's zone, which is right while every centre is in it.
+      TZ: ${TZ:-Europe/Rome}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: booking

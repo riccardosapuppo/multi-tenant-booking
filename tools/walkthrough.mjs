@@ -211,11 +211,19 @@ async function main() {
     token: patient.token,
   });
 
-  expect('the booking is at northgate', mineNorth.body.bookings.length > 0);
+  const reference = booked.body.booking.reference;
+  const atNorth = mineNorth.body.bookings.some((one) => one.reference === reference);
+  const atRiver = mineRiver.body.bookings.some((one) => one.reference === reference);
+
+  expect('the booking is at northgate', atNorth);
   expect(
     'and the same person sees nothing of it at riverside',
-    mineRiver.status === 200 && mineRiver.body.bookings.length === 0,
-    `riverside returned ${mineRiver.body?.bookings?.length} bookings for the same token`
+    mineRiver.status === 200 && !atRiver,
+    // Checked by reference rather than by riverside being empty. It was the
+    // second of those at first, and it broke the moment the demonstration
+    // seeded riverside with a diary of its own — a check that passes because
+    // of what happens to be in the database is a check about the database.
+    `riverside returned the booking ${reference}, which was made at northgate`
   );
 
   // -------------------------------------------------------------- permissions

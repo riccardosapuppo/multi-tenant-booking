@@ -1,0 +1,150 @@
+/* One stylesheet. The application is four screens; a framework would be more
+   code than the application. */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --line: #e2e5ea;
+  --ink: #14181f;
+  --ink-soft: #4a5260;
+  --ink-faint: #79818f;
+  --accent: #1f6f5c;
+  --accent-ink: #124436;
+  --accent-soft: #e3f0eb;
+  --hover: #eef0f3;
+  --warn: #8a4b16;
+  --warn-soft: #fbeee0;
+  --bad: #8f2f2f;
+  --bad-soft: #fbe9e9;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c;
+    --surface: #1b1f26;
+    --line: #2a2f38;
+    --ink: #eef1f5;
+    --ink-soft: #b3bcc9;
+    --ink-faint: #8a93a1;
+    --accent: #4bbd9c;
+    --accent-ink: #cdeee3;
+    --accent-soft: #1e3b34;
+    --hover: #232830;
+    --warn: #e0a464;
+    --warn-soft: #33281b;
+    --bad: #e58686;
+    --bad-soft: #351f1f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 0 0 0.35rem; }
+h2 { font-size: 1.05rem; letter-spacing: -0.01em; margin: 0 0 0.75rem; }
+p { margin: 0 0 0.9rem; }
+
+.lede { color: var(--ink-soft); margin-bottom: 1.75rem; max-width: 46rem; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.cards { display: grid; gap: 1rem; }
+.grid-2 { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
+
+label { display: block; }
+.field { margin-bottom: 0.9rem; }
+.field > span { display: block; font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 0.3rem; }
+
+input, select, button {
+  font: inherit;
+  color: inherit;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 550;
+}
+
+button:hover:not(:disabled) { filter: brightness(1.08); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button.quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-soft);
+  font-weight: 450;
+}
+
+button.quiet:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+button.danger { background: transparent; border-color: var(--line); color: var(--bad); }
+button.danger:hover:not(:disabled) { background: var(--bad-soft); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--ink-faint); font-weight: 550; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+.tag {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: var(--hover);
+  color: var(--ink-soft);
+}
+
+.tag.ok { background: var(--accent-soft); color: var(--accent-ink); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+
+.note {
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+}
+
+.note.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.note.bad { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+
+.times { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.times button { background: var(--surface); border-color: var(--line); color: var(--ink); font-variant-numeric: tabular-nums; }
+.times button.picked { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.spread { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.muted { color: var(--ink-faint); font-size: 0.88rem; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }

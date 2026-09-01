@@ -25,6 +25,26 @@
 
 'use strict';
 
+/**
+ * Time zones, and the limit this accepts.
+ *
+ * Opening hours are local hours: a centre that opens at nine opens at nine
+ * where it is, and `09:00` in `room_schedules` means that and not an instant.
+ * The functions below build times in the *process's* zone, which is correct
+ * for as long as every centre is in one zone — so the register carries a
+ * timezone per centre, and the container is given it (see docker-compose.yml).
+ *
+ * A platform whose centres are genuinely in different zones has to do this
+ * properly: build each instant in the centre's own zone, which in Node means
+ * Intl or a library, and store the zone with the schedule rather than with the
+ * centre. That is not done here, and this paragraph is where it says so rather
+ * than a reader finding out from a booking an hour out.
+ *
+ * The symptom, when it was wrong: the container ran in UTC, a session stored
+ * as 09:00 went out as 09:00Z, and a browser in Rome offered the first
+ * appointment of the day at 11:00.
+ */
+
 /** Monday is 0, to match the seven-character weekday pattern in the schema. */
 function weekdayIndex(date) {
   return (date.getDay() + 6) % 7;

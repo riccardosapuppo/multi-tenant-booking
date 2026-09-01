@@ -24,6 +24,7 @@
 'use strict';
 
 const { sharedPool, tenantPool } = require('../db/pools');
+const { all } = require('../tenants/registry');
 const provision = require('../tenants/provision');
 const passwords = require('../auth/passwords');
 
@@ -223,6 +224,101 @@ const SHAPES = {
   },
 };
 
+/**
+ * A few appointments already in the diary.
+ *
+ * Without these the desk is an empty table on the first run, which
+ * demonstrates nothing — nobody opens a booking system to look at a blank day.
+ * They are spread over the next few days from whenever this is run, so the
+ * demonstration is never stale, and they are placed to make two things visible
+ * without anybody having to be told:
+ *
+ *   - at Northgate, a normal day's mix of payment categories;
+ *   - at Riverside, an exempt patient in a morning whose exempt quota is one.
+ *     Try to book a second and the interface says the quota is used up and
+ *     offers the same morning to a private patient. That is the rule the
+ *     original was built around and it is the first thing worth seeing.
+ */
+async function fillDiary(tenant, userId, plan) {
+  const pool = tenantPool(tenant);
+  const { rows: rooms } = await pool.query('SELECT id, code, modality FROM rooms ORDER BY id');
+  const { rows: exams } = await pool.query('SELECT id, code, minutes, price_cents FROM exams');
+
+  const names = [
+    'Demo Patient',
+    'Second Demo Patient',
+    'Third Demo Patient',
+    'Fourth Demo Patient',
+    'Fifth Demo Patient',
+  ];
+
+  let made = 0;
+  for (const entry of plan) {
+    const room = rooms.find((candidate) => candidate.code === entry.room);
+    const exam = exams.find((candidate) => candidate.code === entry.exam);
+    if (!room || !exam) continue;
+
+    const starts = new Date();
+    starts.setDate(starts.getDate() + entry.inDays);
+    starts.setHours(entry.hour, entry.minute || 0, 0, 0);
+    const ends = new Date(starts.getTime() + exam.minutes * 60000);
+
+    const { rows } = await pool.query(
+      `INSERT INTO bookings
+         (reference, user_id, patient_name, category, starts_at, ends_at, room_id, total_cents)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [
+        bookingReference(),
+        userId,
+        names[made % names.length],
+        entry.category,
+        starts.toISOString(),
+        ends.toISOString(),
+        room.id,
+        exam.price_cents,
+      ]
+    );
+
+    if (rows[0]) {
+      await pool.query(
+        'INSERT INTO booking_items (booking_id, exam_id, price_cents, minutes) VALUES ($1, $2, $3, $4)',
+        [rows[0].id, exam.id, exam.price_cents, exam.minutes]
+      );
+      made += 1;
+    }
+  }
+
+  return made;
+}
+
+/** The same shape as the one the diary hands out, without importing the store. */
+function bookingReference() {
+  const alphabet = 'CDFHJKLMNPRTVWXY234679';
+  const pick = () => alphabet[Math.floor(Math.random() * alphabet.length)];
+  const letters = Array.from({ length: 6 }, pick).join('');
+  return `${letters.slice(0, 3)}-${letters.slice(3)}`;
+}
+
+const DIARY = {
+  northgate: [
+    { inDays: 0, hour: 9, room: 'XR1', exam: 'XR-CHEST', category: 'health_service' },
+    { inDays: 0, hour: 9, minute: 30, room: 'XR1', exam: 'XR-KNEE', category: 'exempt' },
+    { inDays: 0, hour: 10, room: 'XR1', exam: 'XR-CHEST', category: 'private' },
+    { inDays: 0, hour: 11, room: 'XR1', exam: 'XR-KNEE', category: 'insured' },
+    { inDays: 1, hour: 9, room: 'XR1', exam: 'XR-CHEST', category: 'private' },
+    { inDays: 1, hour: 10, room: 'XR1', exam: 'XR-CHEST', category: 'health_service' },
+    { inDays: 2, hour: 9, room: 'XR1', exam: 'XR-KNEE', category: 'exempt' },
+  ],
+  riverside: [
+    // The morning allows one exempt patient. This is that one.
+    { inDays: 0, hour: 9, room: 'XR1', exam: 'XR-CHEST', category: 'exempt' },
+    { inDays: 0, hour: 10, room: 'XR1', exam: 'XR-KNEE', category: 'private' },
+    { inDays: 1, hour: 9, room: 'XR1', exam: 'XR-CHEST', category: 'health_service' },
+  ],
+};
+
 /** True when the register has nothing in it, so `npm start` is idempotent. */
 async function alreadyDone() {
   const { rows } = await sharedPool().query('SELECT count(*)::int AS n FROM centres');
@@ -287,6 +383,18 @@ async function run() {
   await grant(patient, 'patient', 'riverside');
 
   console.log('  accounts: platform, admin, staff, patient — passwords are in the README');
+
+  // Something in the diary, so the desk is a working day rather than a blank
+  // table. The register is read back for the tenants, since fillDiary needs a
+  // tenant and not a slug.
+  const live = await all();
+  for (const tenant of live) {
+    const plan = DIARY[tenant.slug];
+    if (!plan) continue;
+    const made = await fillDiary(tenant, patient, plan);
+    console.log(`  ${tenant.slug}: ${made} appointments already in the diary`);
+  }
+
   return { seeded: true, centres: CENTRES.length };
 }
 
