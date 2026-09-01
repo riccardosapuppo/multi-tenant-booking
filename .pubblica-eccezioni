@@ -1,13 +1,26 @@
 # Riscontri veri che non sono segreti, e perché.
 #
-# Nessuno dei due apre qualcosa che esiste: uno è il nome di una variabile che
-# legge dall'ambiente, l'altro è la password di un database che nasce e muore
-# con `docker compose up` su questa macchina. Metterla lì è deliberato: la
-# dimostrazione deve partire con un comando solo, e una password inventata sul
-# momento renderebbe il file inutile a chiunque lo legga.
+# Ognuno è stato letto. Nessuno apre qualcosa che esiste: sono la password di
+# un database che nasce e muore con `docker compose up` sulla macchina di chi
+# legge, le quattro credenziali dimostrative, e due variabili che leggono un
+# valore invece di contenerlo.
+#
+# Le credenziali dimostrative stanno nel codice E nel README di proposito.
+# Questo progetto dimostra un confine di permessi, e un confine su cui non si
+# può stare da entrambi i lati è un'affermazione, non una dimostrazione: le
+# quattro identità servono a vedere la differenza in un clic. Il database che
+# aprono viene creato vuoto sulla macchina del lettore e buttato via insieme
+# al contenitore.
 #
 # Non vale per i nomi aziendali e per le chiavi vere: quelli bloccano comunque,
 # da qualunque file.
 
-apps/api/src/main.ts     # una variabile che legge la password dall'ambiente, non un valore
-docker-compose.yml       # la password del database usa-e-getta della dimostrazione
+docker-compose.yml                       # password del PostgreSQL usa-e-getta della dimostrazione
+.github/workflows/ci.yml                 # la stessa, per il servizio PostgreSQL della CI
+backend/db/pools.js                      # legge POSTGRES_PASSWORD dall'ambiente, con un default per la demo
+backend/auth/routes.js                   # `const password = String(req.body?.password)`: una variabile, non un valore
+backend/auth/passwords.js                # il testo "a password must be at least 8 characters"
+backend/seed/demo.js                     # le quattro password dimostrative, documentate nel README
+web/src/app/auth/sign-in.component.ts    # le stesse, come pulsanti sulla pagina di accesso
+tools/walkthrough.mjs                    # le stesse, per guidare il sistema in esecuzione
+README.md                                # la tabella che le elenca, che è metà della dimostrazione
