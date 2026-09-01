@@ -1,0 +1,13 @@
+# Riscontri veri che non sono segreti, e perché.
+#
+# Nessuno dei due apre qualcosa che esiste: uno è il nome di una variabile che
+# legge dall'ambiente, l'altro è la password di un database che nasce e muore
+# con `docker compose up` su questa macchina. Metterla lì è deliberato: la
+# dimostrazione deve partire con un comando solo, e una password inventata sul
+# momento renderebbe il file inutile a chiunque lo legga.
+#
+# Non vale per i nomi aziendali e per le chiavi vere: quelli bloccano comunque,
+# da qualunque file.
+
+apps/api/src/main.ts     # una variabile che legge la password dall'ambiente, non un valore
+docker-compose.yml       # la password del database usa-e-getta della dimostrazione
