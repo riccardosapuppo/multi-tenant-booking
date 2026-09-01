@@ -25,9 +25,23 @@ The original was built for a client and lives in a private repository. This is a
 
 ![Booking slots for Demo Center Alpha](docs/booking-dashboard.png)
 
-## Run the complete demo
+## Before you start
 
-Requirements are Node.js 20.11 or newer, npm 10 or newer, and Docker with the Compose plugin.
+**To run the demo, Docker with the Compose plugin is the only requirement.**
+The API and the web application are built inside their own images and all four
+databases run in one `postgres:16-alpine` container: there is no PostgreSQL to
+install, no Angular CLI, no global anything, and no account anywhere. `npm
+start` is a one-line shortcut for `docker compose up --build`, so even Node is
+optional if you run that directly.
+
+**To run the tests or work on it**, Node.js 20.11 or newer and npm 10 or newer,
+plus `npm install` — about 250 MB of packages.
+
+Nothing is persisted outside Docker: the databases live and die with the
+container, so every start is a clean one. `docker compose down --rmi local`
+removes the two images built here and puts the machine back.
+
+## Run the complete demo
 
 ```bash
 git clone https://github.com/riccardosapuppo/multi-tenant-booking.git
