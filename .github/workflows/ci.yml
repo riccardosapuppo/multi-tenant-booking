@@ -1,14 +1,101 @@
 name: CI
 on: [push, pull_request]
+
 jobs:
-  verify:
+  api:
+    name: API, and that one centre cannot see another
     runs-on: ubuntu-latest
+
+    # A real PostgreSQL, so the isolation tests are never the ones that get
+    # skipped. They skip locally when there is no database — a red suite that
+    # means "you did not start Docker" teaches people to ignore red suites —
+    # and skipping them here would mean the claim this project makes is never
+    # actually checked anywhere.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: booking
+          POSTGRES_PASSWORD: booking
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U booking -d postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+      POSTGRES_REGISTRY: booking_ci
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+        working-directory: backend
+
+      - name: Create the register database
+        run: PGPASSWORD=booking psql -h localhost -U booking -d postgres -c 'CREATE DATABASE booking_ci'
+
+      - name: Tests
+        run: npm test 2>&1 | tee out.txt
+        working-directory: backend
+
+      # Skipped and passed look the same from a green tick. Checked rather than
+      # trusted, because the whole point of running a database here is that
+      # these particular tests do not skip.
+      - name: The isolation tests actually ran
+        run: |
+          if grep -qE "^# skipped [1-9]" out.txt; then
+            echo "tests skipped in CI, where a database exists:"
+            grep -E "skipped|SKIP" out.txt
+            exit 1
+          fi
+          grep -E "^# pass [0-9]+" out.txt
+        working-directory: backend
+
+  stack:
+    name: The whole thing starts from nothing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # "The tests pass" and "somebody can run it" are different claims, and
+      # only the second is what the README promises.
+      - name: docker compose up
+        run: docker compose up -d --build
+
+      - name: Wait for it, then ask it things
+        run: |
+          for attempt in $(seq 90); do
+            curl -sf http://localhost:4200/api/health > /dev/null && break
+            sleep 2
+          done
+
+          curl -sf http://localhost:4200/api/health
+          echo
+
+          # A centre answers with its own price list.
+          curl -sf -H 'X-Centre: northgate' http://localhost:4200/api/centre/exams | head -c 300
+          echo
+
+          # Suspended and unknown are different answers. Checking only one of
+          # them would pass against a resolver that returned the same for both.
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Centre: lakeside' http://localhost:4200/api/centre/exams)" = 403
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Centre: nowhere'  http://localhost:4200/api/centre/exams)" = 404
+
+          # Two centres named at once is refused, not resolved.
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Centre: northgate' 'http://localhost:4200/api/centre/exams?centre=riverside')" = 400
+
+      - name: What it said, if it failed
+        if: failure()
+        run: docker compose logs --tail 100

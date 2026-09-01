@@ -1,0 +1,52 @@
+# Everything the demonstration needs, and nothing that survives it.
+#
+# One PostgreSQL container holds the register and every centre's database. No
+# named volume on purpose: the data lives and dies with the container, so every
+# `docker compose up` is a clean start and there is no state to explain when
+# something behaves oddly on the second run.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+      POSTGRES_DB: postgres
+    healthcheck:
+      # Against the socket rather than TCP, and with a query rather than a
+      # port: PostgreSQL accepts connections a moment before it answers, and a
+      # service that starts on the first open socket fails its first query.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U booking -d postgres && psql -U booking -d postgres -c 'SELECT 1' >/dev/null"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      PORT: 3000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+      POSTGRES_REGISTRY: booking_registry
+    ports:
+      # Exposed so the walkthrough and curl can reach the API directly; the web
+      # container proxies it on 4200 as well. Overridable, because 3000 is the
+      # port every other development server also wants and finding that out
+      # from a Docker error message is a bad first minute:
+      #   API_PORT=3001 docker compose up
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-4200}:80"
