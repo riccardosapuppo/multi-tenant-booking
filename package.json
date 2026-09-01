@@ -8,7 +8,8 @@
   "scripts": {
     "start": "docker compose up --build",
     "stop": "docker compose down",
-    "test": "npm test --prefix backend",
+    "build": "cd web && npm install --no-audit --no-fund && npm run build",
+    "test": "cd backend && node --test",
     "walkthrough": "node tools/walkthrough.mjs"
   },
   "engines": {
