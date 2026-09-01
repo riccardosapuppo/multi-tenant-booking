@@ -1,7 +1,0 @@
-.git
-.angular
-coverage
-dist
-docs
-node_modules
-*.log
