@@ -5,6 +5,7 @@ import { ApiService, Exam, SearchAnswer, SearchDay, Site } from '../shell/api.se
 import { SessionService } from '../shell/session.service';
 import { clock, longDate } from '../shell/dates';
 import { ResultsComponent } from './results.component';
+import { IconComponent } from '../shell/icon.component';
 
 /**
  * Booking, in the shape the original asked the question.
@@ -59,7 +60,7 @@ const CATEGORIES = [
 @Component({
   selector: 'app-book',
   standalone: true,
-  imports: [FormsModule, ResultsComponent],
+  imports: [FormsModule, ResultsComponent, IconComponent],
   template: `
     <div class="notice">
       Online booking at <strong>{{ session.centre() }}</strong> is for the exams listed
@@ -81,6 +82,7 @@ const CATEGORIES = [
       <div class="panels">
         <section class="panel" [class.open]="panel() === 'site'">
           <button type="button" class="head" (click)="toggle('site')">
+            <app-icon name="site" class="badge" />
             <span class="tick" [class.set]="true">✓</span>
             <span class="said">Site: <strong>{{ siteName() }}</strong></span>
             <span class="chev">⌄</span>
@@ -103,6 +105,7 @@ const CATEGORIES = [
 
         <section class="panel" [class.open]="panel() === 'exams'">
           <button type="button" class="head" (click)="toggle('exams')">
+            <app-icon name="exams" class="badge" />
             <span class="tick" [class.set]="chosen().length > 0">{{ chosen().length > 0 ? '✓' : '·' }}</span>
             <span class="said">
               @if (chosen().length === 0) {
@@ -157,6 +160,7 @@ const CATEGORIES = [
 
         <section class="panel" [class.open]="panel() === 'category'">
           <button type="button" class="head" (click)="toggle('category')">
+            <app-icon name="paying" class="badge" />
             <span class="tick set">✓</span>
             <span class="said">Paying as: <strong>{{ categoryLabel() }}</strong></span>
             <span class="chev">⌄</span>
@@ -184,6 +188,7 @@ const CATEGORIES = [
 
         <section class="panel" [class.open]="panel() === 'day'">
           <button type="button" class="head" (click)="toggle('day')">
+            <app-icon name="day" class="badge" />
             <span class="tick set">✓</span>
             <span class="said">Preferred day: <strong>{{ weekdayLabel() }}</strong></span>
             <span class="chev">⌄</span>
@@ -207,6 +212,7 @@ const CATEGORIES = [
 
         <section class="panel" [class.open]="panel() === 'part'">
           <button type="button" class="head" (click)="toggle('part')">
+            <app-icon name="when" class="badge" />
             <span class="tick set">✓</span>
             <span class="said">When: <strong>{{ partLabel() }}</strong></span>
             <span class="chev">⌄</span>
@@ -230,6 +236,7 @@ const CATEGORIES = [
       </div>
 
       <button class="search" type="button" [disabled]="chosen().length === 0 || searching()" (click)="find()">
+        <app-icon name="search" [size]="19" />
         {{ searching() ? 'Searching…' : 'Search' }}
       </button>
 

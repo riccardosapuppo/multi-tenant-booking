@@ -85,6 +85,17 @@
    which the shared stylesheet later gave uppercase and letter-spacing to —
    so "Choose an exam or a visit from the list" became small caps across two
    lines on a phone. Two different jobs had one class name. */
+/* The icon sits between the tick and the words: the tick says whether this
+   panel has been answered, the icon says which question it is. Two different
+   jobs, and at a glance down five stacked panels the icon is the faster of
+   the two to read. */
+.badge {
+  color: var(--ink-faint);
+  transition: color 160ms ease;
+}
+
+.panel.open .badge { color: var(--accent); }
+
 .said { flex: 1; }
 .said small { color: var(--ink-faint); margin-left: 0.4rem; }
 
@@ -164,6 +175,10 @@
 .add:hover { background: var(--accent); color: #fff; border-style: solid; filter: none; }
 
 .search {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
   width: 100%;
   margin: 1.15rem 0 1.5rem;
   padding: 0.9rem;
