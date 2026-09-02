@@ -29,3 +29,6 @@ backend/seed/demo.js                     # le quattro password dimostrative, doc
 web/src/app/auth/sign-in.component.ts    # le stesse, come pulsanti sulla pagina di accesso
 tools/walkthrough.mjs                    # le stesse, per guidare il sistema in esecuzione
 README.md                                # la tabella che le elenca, che è metà della dimostrazione
+tools/through-the-screen.mjs             # le stesse, per guidare il percorso attraverso l'interfaccia
+tools/who-can-do-what.mjs                # le stesse, per provare ogni ruolo contro cio che gli e promesso
+tools/screenshots.mjs                    # le stesse, per rifare le figure del README entrando come ognuno
