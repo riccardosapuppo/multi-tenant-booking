@@ -158,6 +158,26 @@ export class ApiService {
     return this.http.get<{ rooms: any[] }>('/api/centre/desk/rooms');
   }
 
+  /**
+   * The whole price list, including what cannot be booked online.
+   *
+   * Not the same call as `exams()`, which patients make: that one returns only
+   * what is bookable, because offering somebody an exam they cannot book is a
+   * dead end. This is the centre's own list, and it has to include the exams
+   * that are switched off — otherwise the screen for switching them back on
+   * cannot show them.
+   */
+  priceList(): Observable<{ exams: Exam[] }> {
+    return this.http.get<{ exams: Exam[] }>('/api/centre/desk/exams');
+  }
+
+  reprice(
+    id: number,
+    change: { price_cents?: number; minutes?: number; bookable?: boolean }
+  ): Observable<{ exam: Exam }> {
+    return this.http.patch<{ exam: Exam }>(`/api/centre/desk/exams/${id}`, change);
+  }
+
   centres(): Observable<{ centres: Centre[] }> {
     return this.http.get<{ centres: Centre[] }>('/api/platform/centres');
   }

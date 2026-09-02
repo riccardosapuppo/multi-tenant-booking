@@ -67,3 +67,19 @@ export function shortWhen(iso: string): string {
 function atMidnight(date: string): Date {
   return new Date(`${date}T00:00:00`);
 }
+
+/**
+ * Today, as `YYYY-MM-DD`, in the zone the person is in.
+ *
+ * `new Date().toISOString().slice(0, 10)` was here and is the same defect that
+ * was fixed in the backend: it converts to UTC first, so anywhere east of it
+ * the early hours of the morning report yesterday. The desk opened on the
+ * wrong day for anybody looking before 02:00 in summer — a diary that says
+ * "nothing booked" when the day is full.
+ */
+export function today(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}

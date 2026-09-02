@@ -39,6 +39,12 @@ const atACentre = () =>
 const atTheDesk = () => decide((session) => session.canUseDesk(), '/book');
 const runsThePlatform = () => decide((session) => session.platformAdmin(), '/book');
 
+/**
+ * Runs THIS centre. Sends staff to the desk rather than to the booking screen:
+ * being refused a page is less confusing when you land on the one you do have.
+ */
+const runsTheCentre = () => decide((session) => session.canEditCentre(), '/desk');
+
 export const ROUTES: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'book' },
   {
@@ -59,6 +65,11 @@ export const ROUTES: Routes = [
     path: 'desk',
     canActivate: [signedIn, atTheDesk],
     loadComponent: () => import('./desk/desk.component').then((m) => m.DeskComponent),
+  },
+  {
+    path: 'prices',
+    canActivate: [signedIn, runsTheCentre],
+    loadComponent: () => import('./centre/prices.component').then((m) => m.PricesComponent),
   },
   {
     path: 'console',

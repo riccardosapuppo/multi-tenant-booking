@@ -133,9 +133,7 @@ export class SignInComponent {
       next: (answer) => {
         this.working.set(false);
         this.session.begin(answer.token, answer.user, answer.centres, answer.platformAdmin);
-        // Somebody with no centre at all is a platform administrator: send
-        // them where they can actually do something.
-        this.router.navigate([answer.centres.length > 0 ? '/book' : '/console']);
+        this.router.navigate([this.landing()]);
       },
       error: (error) => {
         this.working.set(false);
@@ -144,5 +142,19 @@ export class SignInComponent {
         );
       },
     });
+  }
+
+  /**
+   * The first screen, chosen by what this person came here to do.
+   *
+   * Everybody used to land on the booking screen, which made signing in as
+   * four different accounts look like signing in as one. Staff do not open
+   * this to book themselves an appointment: they open it because somebody is
+   * standing at the desk. Sending each role to its own work is the plainest
+   * way the difference between them shows.
+   */
+  private landing(): string {
+    if (this.session.platformAdmin()) return '/console';
+    return this.session.canUseDesk() ? '/desk' : '/book';
   }
 }

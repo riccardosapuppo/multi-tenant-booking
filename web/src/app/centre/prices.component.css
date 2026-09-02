@@ -1,0 +1,159 @@
+/* The price list.
+   A table that is edited in place, so the row has to say three things at once:
+   what it is, whether it has been touched, and whether patients are offered it. */
+
+.problem p {
+  margin: 0;
+  color: var(--bad);
+}
+
+/* The role named in the sentence takes the role's own colour, which the header
+   is already wearing. Left as the generic green tag it said "administrator" in
+   the colour of a patient. */
+.lede .tag.ok {
+  background: var(--role-soft);
+  color: var(--role-ink);
+}
+
+table.prices {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.prices th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 0 0.75rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+table.prices th.num,
+table.prices td.num {
+  text-align: right;
+}
+
+table.prices td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+table.prices tr:last-child td {
+  border-bottom: none;
+}
+
+.name {
+  display: block;
+  font-weight: 600;
+}
+
+table.prices small {
+  display: block;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Touched but not saved. The row is marked on its edge rather than filled:
+   the fill is how "not offered online" is drawn, and two states in the same
+   place cannot both be read. */
+tr.changed {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+tr.changed td:first-child {
+  padding-left: calc(0.75rem + 3px);
+}
+
+/* Not offered online. Held back rather than hidden — it is still the centre's
+   exam, and this screen is where it gets switched back on. */
+tr.off .name,
+tr.off small {
+  color: var(--ink-faint);
+}
+
+table.prices input[type='number'] {
+  width: 5.5rem;
+  padding: 0.35rem 0.5rem;
+  text-align: right;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+table.prices input[type='number']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.currency {
+  color: var(--ink-faint);
+  margin-right: 0.15rem;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.switch input {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+button.save {
+  padding: 0.35rem 0.9rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+button.save:disabled {
+  color: var(--ink-faint);
+  background: transparent;
+  border-color: var(--line);
+  cursor: default;
+}
+
+button.save:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+.after {
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+}
+
+/* On a phone the table scrolls inside its card rather than pushing the page
+   sideways. The exam name is the column somebody navigates by, so it stays. */
+@media (max-width: 700px) {
+  .card:has(table.prices) {
+    overflow-x: auto;
+  }
+
+  table.prices {
+    min-width: 34rem;
+  }
+}

@@ -13,5 +13,45 @@
   </head>
   <body>
     <app-root></app-root>
+
+    <!--
+      Evict any service worker left on this origin.
+
+      This application does not install one. An earlier version of it did, and a
+      service worker outlives the thing that installed it: it stays registered
+      against the ORIGIN, keeps serving the app it precached, and is reached
+      before the network is — so no amount of `Cache-Control` on the server can
+      dislodge it. The symptom is opening the site and being handed a build from
+      weeks ago, calling an API that has moved on, with "no such endpoint" on
+      the screen, until somebody thinks to press Ctrl+F5.
+
+      It is worse than a one-off on a development machine, because
+      `localhost:4200` is the address every project uses in turn: a worker one
+      of them registered hijacks the next.
+
+      So: unregister everything in this scope and empty the caches it kept. It
+      costs nothing where there is none, and it means a reader never meets
+      somebody else's leftovers.
+    -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then(function (installed) {
+            return Promise.all(installed.map(function (one) { return one.unregister(); }));
+          })
+          .then(function (removed) {
+            if (!removed.some(Boolean) || typeof caches === 'undefined') return null;
+            // Its caches go too. Unregistering stops it running; the storage it
+            // filled stays until somebody empties it.
+            return caches.keys().then(function (names) {
+              return Promise.all(names.map(function (name) { return caches.delete(name); }));
+            });
+          })
+          .catch(function () {
+            /* Private windows and blocked storage throw here. Nothing to do. */
+          });
+      }
+    </script>
   </body>
 </html>

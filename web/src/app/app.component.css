@@ -16,9 +16,86 @@
   min-height: 100vh;
 }
 
+.shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------- the role
+ *
+ * Signing in as somebody else has to change the application, not just what is
+ * inside one menu. `data-role` sits on the shell and swaps three properties;
+ * everything below reads them, so the header rule, the active link and the
+ * badge all move together and nothing has to remember to.
+ *
+ * The colours are far enough apart to tell at a glance and close enough in
+ * weight that none of them shouts. The default is the product's own green,
+ * which is what somebody with no role at the centre they are looking at gets —
+ * a real state, not a fallback.
+ */
+.shell {
+  --role: var(--accent);
+  --role-ink: var(--accent-ink);
+  --role-soft: var(--accent-soft);
+}
+
+.shell[data-role='patient'] {
+  --role: #1f6f5c;
+  --role-ink: #14483b;
+  --role-soft: #e4efeb;
+}
+
+.shell[data-role='staff'] {
+  --role: #23608f;
+  --role-ink: #17415f;
+  --role-soft: #e2ecf4;
+}
+
+.shell[data-role='centre_admin'] {
+  --role: #97591a;
+  --role-ink: #6b3f12;
+  --role-soft: #f8ecdd;
+}
+
+.shell[data-role='platform_admin'] {
+  --role: #5b4396;
+  --role-ink: #3e2d69;
+  --role-soft: #eae5f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .shell[data-role='patient'] {
+    --role: #4dbd9c;
+    --role-ink: #cfeee4;
+    --role-soft: #1b3a33;
+  }
+
+  .shell[data-role='staff'] {
+    --role: #6fb0e0;
+    --role-ink: #d4e9f7;
+    --role-soft: #17303f;
+  }
+
+  .shell[data-role='centre_admin'] {
+    --role: #dda05a;
+    --role-ink: #f6e2c9;
+    --role-soft: #37281a;
+  }
+
+  .shell[data-role='platform_admin'] {
+    --role: #a08fd6;
+    --role-ink: #e2daf5;
+    --role-soft: #262038;
+  }
+}
+
 .top {
   background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  /* The rule under the header IS the role. One pixel of the line is the
+     product's own; the two above it are whoever is signed in. */
+  border-bottom: 2px solid var(--role);
 }
 
 .bar {
@@ -82,7 +159,22 @@ nav a {
 }
 
 nav a:hover { background: var(--hover); color: var(--ink); }
-nav a.here { background: var(--accent-soft); color: var(--accent-ink); font-weight: 560; }
+nav a.here { background: var(--role-soft); color: var(--role-ink); font-weight: 560; }
+
+/* Who you are here, said once and plainly.
+   It was a word inside the centre selector — "northgate — staff" — which is
+   where you look for a centre and not for yourself. */
+.badge {
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  background: var(--role-soft);
+  color: var(--role-ink);
+  border: 1px solid color-mix(in srgb, var(--role) 35%, transparent);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 
 .who {
   display: flex;
@@ -154,7 +246,12 @@ footer {
   .name { display: none; }
   .who button { white-space: nowrap; order: 2; }
 
-  .centre { order: 3; width: 100%; }
+  /* Row two answers one question — where am I, and as whom — so the badge and
+     the centre share it. The word "Centre" goes: the selector is plainly a
+     centre and the row has no space for a label that says so. */
+  .badge { order: 3; }
+  .centre { order: 3; flex: 1 1 8rem; min-width: 0; }
+  .centre .label { display: none; }
   .centre select { flex: 1; min-width: 0; }
 
   nav {

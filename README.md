@@ -63,6 +63,30 @@ to read every record on it, so `platform_admin` is a different job from
 `centre_admin` rather than a bigger one. Sign in as it and try the desk: the
 API returns 403.
 
+Every claim in that table is checked by `npm run check:roles`, which drives
+each account through what it is promised **and** through what it is promised it
+cannot do. One of those rows used to be false — see *Checking it*.
+
+### Four accounts, four applications
+
+The header is where a role becomes visible, and it changes completely: its
+colour, what it offers, and where signing in puts you. One service, one login,
+and the boundary between these four people is a permission rather than four
+deployments.
+
+<p>
+  <img src="docs/role-patient.png" alt="Patient: a green rule, Book and My bookings" width="760" /><br />
+  <img src="docs/role-staff.png" alt="Staff: a blue rule, Desk and Book for a patient" width="760" /><br />
+  <img src="docs/role-admin.png" alt="Centre administrator: an amber rule, Desk, Price list and Book for a patient" width="760" /><br />
+  <img src="docs/role-platform.png" alt="Platform administrator: a violet rule, Centres alone, and no centre selector" width="760" />
+</p>
+
+Read from the top: the patient books and looks at their own appointments; staff
+open on today's diary and book on somebody's behalf; the centre's administrator
+has the price list as well; and whoever runs the platform has centres and
+*nothing else* — no centre selector, because they belong to none, and the word
+under the mark says **no centre**.
+
 ## What it looks like
 
 Booking, in the shape the original asked the question: panels that open one at
@@ -94,6 +118,15 @@ The desk, which is behind a role at that centre. The totals along the top are
 per payment category, because that is what the quotas are counted in:
 
 ![The desk: a day's appointments with times, rooms, patients, categories and references](docs/desk.png)
+
+And the price list, which **only** the centre's own administrator can open —
+staff at the same centre read the desk and are sent back to it. None of the
+three columns is just a number: minutes is how long a slot is, so changing it
+re-cuts every day on the booking screen; *offered online* takes an exam off
+what patients are shown and leaves it here; and the price is what somebody is
+quoted before they choose a time.
+
+![The price list: exam, minutes, price and whether it is offered online, each row saved on its own](docs/prices.png)
 
 ## The five minutes worth spending
 
@@ -147,7 +180,7 @@ A suspended centre answers 403 and an unknown one 404 — different answers on
 purpose, since a platform that returns the same for both lets anybody
 enumerate its centres.
 
-## One application, three jobs
+## One application, four jobs
 
 The original had two deployments: a portal, and a separate console for whoever
 ran the platform. Separating the jobs was right; separating the *applications*
@@ -160,13 +193,29 @@ Watch the *Desk* link appear and disappear as you switch centres: that is what
 "a role is always at a centre" means, and it is more convincing than a
 paragraph about it.
 
+Putting them in one application only shows that, though, if signing in as
+somebody else visibly changes the application — and at first it did not.
+Everybody got the same two links plus perhaps a third, the role was a word
+inside the centre selector, and signing out and back in as an administrator
+looked identical. So three things move together with the role now: the colour
+the header wears, the set of links (not the same links with some hidden — a
+patient has *My bookings*, staff *book for a patient*), and where signing in
+puts you, because staff do not open this to book themselves an appointment.
+
 ## Checking it
 
 ```
 npm test                     # the rules, and the isolation, if a database is there
 npm run walkthrough          # drives the running platform over HTTP
+npm run check:screen         # drives the whole journey through a browser
+npm run check:roles          # every account against every claim made about it
+npm run check:serving        # nothing here can hand somebody yesterday's build
 npm run check:mark           # the header mark and the tab icon are one drawing
 ```
+
+The three `check:` scripts that drive a browser want `playwright-core` on the
+path; they say so and stop rather than pretending to have passed. They are
+checks, not dependencies, so they are not in `package.json`.
 
 The suite covers the rules — quotas, slot cutting, weekday patterns — and,
 when PostgreSQL is reachable, creates two centres of its own to check that
@@ -188,6 +237,36 @@ A role is never enough on its own
   ok    and not at a centre they do not work at
   ok    the platform administrator cannot read a patient diary
 ```
+
+### And a check at one layer cannot see the next one down
+
+Three layers, because each is blind to the one above it, and every one of them
+has caught something the others could not.
+
+`npm run check:screen` drives the whole journey with a browser: a patient books
+and reads the reference off the screen, signs out, and staff sign in and find
+that appointment on the desk with the right name, time, room and category.
+Everything it does the walkthrough already does over HTTP — and that is a
+different claim. The API behaving is not somebody being able to do it. It found
+three screens that did not reload when the centre was switched, so one centre's
+appointments sat under another centre's name, and a centre that survived
+signing out.
+
+`npm run check:roles` takes the table under *Signing in* and treats it as a
+promise. It found the row that was false: it said the centre's administrator
+"may change its price list", and `PATCH /desk/exams/:id` existed, was guarded
+correctly and had a passing test — with no screen anywhere that called it. True
+of the system, false of the interface, which is the only place a person can
+act.
+
+`npm run check:serving` is about what a browser is handed. An earlier version
+of this project installed a service worker; a service worker outlives the build
+that registered it, is reached before the network, and keeps serving its own
+precached copy — so opening the site returned a page from weeks ago and only
+Ctrl+F5 got past it. The way a browser gives up on one is by re-fetching its
+files and finding them gone, and `try_files $uri $uri/ /index.html` answered
+`/ngsw.json` with 200 and a page of HTML. **A request that names a file and
+does not find one must be a 404, never the application.**
 
 ## Where things are
 

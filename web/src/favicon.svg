@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <!--
-    The same mark as shell/logo.component.ts: a morning of time bands, one of
-    them booked. Kept as one file rather than exported to PNG so the tab icon
-    and the header cannot drift apart.
+    The same mark as shell/logo.component.ts: a day as a ring, with the booked
+    part taken out of it. Kept as one file rather than exported to PNG so the
+    tab icon and the header cannot drift apart.
 
     The colours are literal here and not custom properties: a favicon is loaded
     outside the page and inherits nothing from it. When the mark changes in the
@@ -10,10 +10,6 @@
     two files in step by remembering" is not a plan.
   -->
   <rect width="32" height="32" rx="7" fill="#1f6f5c"/>
-  <g fill="#7fc7b1" opacity="0.5">
-    <rect x="7" y="8" width="11" height="2.5" rx="1.25"/>
-    <rect x="7" y="20.5" width="8" height="2.5" rx="1.25"/>
-    <rect x="7" y="25" width="12" height="2.5" rx="1.25"/>
-  </g>
-  <rect x="7" y="13" width="18" height="4.5" rx="2.25" fill="#ffffff"/>
+  <circle cx="16" cy="16" r="9.5" stroke="#7fc7b1" stroke-width="2.5" opacity="0.6"/>
+  <circle cx="16" cy="16" r="9.5" stroke="#ffffff" stroke-width="6" stroke-linecap="butt" stroke-dasharray="10 50" transform="rotate(-90 16 16)"/>
 </svg>

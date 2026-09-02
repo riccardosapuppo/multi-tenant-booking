@@ -322,6 +322,47 @@ async function main() {
     `riverside returned the booking ${reference}, which was made at northgate`
   );
 
+  // ------------------------------------------------------- and it is put back
+  //
+  // The patient cancels what they just booked. That is a real capability and
+  // worth checking on its own, and it is also the only reason this file can be
+  // run twice.
+  //
+  // It could not be, before. Every run booked a slot seven days out and left it
+  // there, and after eight runs the morning was full and this said "there are
+  // times free — FAIL". Nothing was broken except the check's own residue, and
+  // a check that ends up accusing the application of its leftovers is one you
+  // learn to ignore. The centre this file creates was being torn down all
+  // along; the appointment it made was not.
+  const dropped = await call(`/api/centre/bookings/${reference}`, {
+    method: 'DELETE',
+    centre: 'northgate',
+    token: patient.token,
+  });
+  expect('a patient can cancel their own booking', dropped.status === 204, `got ${dropped.status}`);
+
+  const afterwards = await call('/api/centre/bookings/mine', {
+    centre: 'northgate',
+    token: patient.token,
+  });
+  // Still on their list, and marked. This asked for the opposite at first —
+  // that the booking disappear — and the application was right and the check
+  // was wrong: cancelling sets a status and keeps the row, so somebody who
+  // cancels can still see that they did. An appointment that vanishes from
+  // your own list is indistinguishable from one that was never made.
+  const after = afterwards.body.bookings.find((one) => one.reference === reference);
+  expect('and it stays on their list, marked cancelled', after?.status === 'cancelled', `it reads ${after?.status ?? 'gone from the list'}`);
+
+  const freed = await call(
+    `/api/centre/availability?room=${room.id}&exam=${northKnee.id}&category=private&day=${when}`,
+    { centre: 'northgate' }
+  );
+  expect(
+    'and the time goes back on offer',
+    freed.body.times.includes(free.body.times[0]),
+    'a cancelled appointment did not give its slot back'
+  );
+
   // -------------------------------------------------------------- permissions
   console.log('\nA role is never enough on its own');
 

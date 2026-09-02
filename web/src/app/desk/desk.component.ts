@@ -2,7 +2,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
-import { clock } from '../shell/dates';
+import { clock, today } from '../shell/dates';
 
 /**
  * The desk: one day, one centre, everything in it.
@@ -89,7 +89,7 @@ export class DeskComponent {
   private readonly api = inject(ApiService);
   readonly session = inject(SessionService);
 
-  readonly day = signal(new Date().toISOString().slice(0, 10));
+  readonly day = signal(today());
   readonly bookings = signal<Booking[]>([]);
   readonly counted = signal<Array<[string, number]>>([]);
   readonly loading = signal(true);
