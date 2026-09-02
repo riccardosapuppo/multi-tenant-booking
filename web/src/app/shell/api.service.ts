@@ -30,6 +30,33 @@ export interface Availability {
   closed: Array<{ session: number; opens: string; closes: string; reason: string }>;
 }
 
+export interface Site {
+  id: number;
+  name: string;
+  address: string;
+}
+
+export interface SearchDay {
+  date: string;
+  priceCents: number;
+  minutes: number;
+  siteName: string;
+  roomId: number;
+  roomName: string;
+  modality: string;
+  times: string[];
+}
+
+export interface SearchAnswer {
+  ok: boolean;
+  reason?: string;
+  minutes: number;
+  priceCents: number;
+  exams?: Array<{ id: number; code: string; name: string }>;
+  days: SearchDay[];
+  closed: Array<{ day: string; opens: string; closes: string; reason: string }>;
+}
+
 export interface Booking {
   id: number;
   reference: string;
@@ -86,6 +113,21 @@ export class ApiService {
     return this.http.get<Availability>(
       `/api/centre/availability?room=${roomId}&exam=${examId}&category=${category}&day=${day}`
     );
+  }
+
+  sites(): Observable<{ sites: Site[] }> {
+    return this.http.get<{ sites: Site[] }>('/api/centre/sites');
+  }
+
+  /** Days with times on them, for several exams and a set of preferences. */
+  search(body: {
+    examIds: number[];
+    category: string;
+    siteId: number | null;
+    weekday: number | null;
+    part: string;
+  }): Observable<SearchAnswer> {
+    return this.http.post<SearchAnswer>('/api/centre/search', body);
   }
 
   book(body: {

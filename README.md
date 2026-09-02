@@ -65,11 +65,18 @@ API returns 403.
 
 ## What it looks like
 
-Booking, in the order somebody decides things — what, then where and who is
-paying, then when. The payment category is asked *before* the times because it
-changes the answer:
+Booking, in the shape the original asked the question: panels that open one at
+a time, each showing its answer once closed. Several exams go into one visit —
+"Add another exam" — and the payment category is asked *before* the times,
+because it changes which times exist.
 
-![Booking an appointment: the exams with their prices and durations, the room and payment category, and the free times](docs/booking.png)
+![The booking panels: site, two exams chosen with Add another exam, payment category, preferred day and time of day](docs/booking-panels.png)
+
+The answer is **days**, not slots. A card per day with the date large, the
+total price for everything asked for, and the times beside it. Nobody books a
+room; they book a morning.
+
+![Search results: a day card with the date, the total price, the modality and site, and the available times beside it](docs/booking.png)
 
 The desk, which is behind a role at that centre. The totals along the top are
 per payment category, because that is what the quotas are counted in:

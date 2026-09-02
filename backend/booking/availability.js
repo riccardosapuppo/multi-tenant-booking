@@ -207,6 +207,20 @@ function freeOnDay({ day, minutes, category, schedules, bookings, step = 15, now
   return { times, closed };
 }
 
+/**
+ * The same question, against the database.
+ *
+ * The pure functions above are the rules; this is the one place that fetches
+ * what they need. It lives here rather than in the store so that everything
+ * about availability is in one file — a caller only has to know one name.
+ */
+async function freeOnDayFor(tenant, { roomId, minutes, category, day, now }) {
+  // Required lazily: this file is otherwise free of the database, and the
+  // tests above load it without one.
+  const store = require('./store');
+  return store.freeTimes(tenant, { roomId, examMinutes: minutes, category, day, now });
+}
+
 module.exports = {
   sessionsOn,
   usage,
@@ -214,6 +228,7 @@ module.exports = {
   roomLeft,
   freeIn,
   freeOnDay,
+  freeOnDayFor,
   weekdayIndex,
   atTime,
   sameDay,

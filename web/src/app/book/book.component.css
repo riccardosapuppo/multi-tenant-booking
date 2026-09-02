@@ -1,0 +1,214 @@
+/* The booking screen, laid out the way the original laid it out: a notice, a
+   stack of panels that open one at a time, a search button, and results as
+   days with their times beside them. */
+
+.notice {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.1rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.panels { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.panel.open { border-color: var(--accent); }
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.95rem 1.1rem;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 450;
+  text-align: left;
+  cursor: pointer;
+}
+
+.head:hover { background: var(--hover); }
+
+.tick {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--hover);
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+}
+
+.tick.set { background: var(--accent); color: #fff; }
+
+.label { flex: 1; }
+.label small { color: var(--ink-faint); margin-left: 0.4rem; }
+
+.chev { color: var(--ink-faint); transition: transform 0.15s; }
+.panel.open .chev { transform: rotate(180deg); }
+
+.body { padding: 0.2rem 1.1rem 1rem; border-top: 1px solid var(--line); }
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+
+.choice input { width: auto; margin-top: 0.25rem; flex: none; }
+.choice span { display: block; }
+.choice small { display: block; color: var(--ink-faint); font-size: 0.85rem; }
+
+.filter { margin: 0.8rem 0 0.4rem; }
+.list { max-height: 21rem; overflow-y: auto; }
+
+.picked { padding: 0 1.1rem 1rem; }
+
+.picked .one {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-top: 1px dashed var(--line);
+}
+
+.picked .one small { display: block; color: var(--ink-faint); font-size: 0.85rem; }
+
+.link {
+  background: transparent;
+  border: 0;
+  color: var(--bad);
+  padding: 0.2rem 0.4rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-weight: 450;
+}
+
+.add {
+  margin-top: 0.6rem;
+  width: 100%;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border: 1px dashed var(--accent);
+  font-weight: 550;
+}
+
+.search {
+  width: 100%;
+  margin: 1.1rem 0 1.5rem;
+  padding: 0.85rem;
+  font-size: 1.02rem;
+}
+
+.regime {
+  text-align: center;
+  padding: 0.55rem;
+  margin-bottom: 0.75rem;
+  background: var(--hover);
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.results { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.day {
+  display: grid;
+  grid-template-columns: 12.5rem 1fr;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.when {
+  padding: 1rem;
+  text-align: center;
+  border-right: 1px solid var(--line);
+}
+
+.when p { margin: 0; line-height: 1.25; }
+.dow { color: var(--ink-soft); font-size: 0.92rem; }
+.num { font-size: 2.1rem; font-weight: 600; letter-spacing: -0.02em; }
+.mon { color: var(--ink-soft); }
+.yr { color: var(--ink-faint); font-size: 0.85rem; }
+
+.price {
+  display: inline-block;
+  margin-top: 0.55rem !important;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.with {
+  margin-top: 0.7rem !important;
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 0.85rem;
+}
+
+.site { color: var(--accent); font-size: 0.88rem; }
+
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.times button {
+  min-width: 5.2rem;
+  padding: 0.55rem 0.4rem;
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 7px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.times button:hover:not(:disabled) { filter: brightness(1.12); }
+
+.done { text-align: center; padding: 2rem 1.25rem; }
+.done .ref { font-size: 1.6rem; letter-spacing: 0.08em; }
+
+.small { font-size: 0.85rem; }
+
+@media (max-width: 40rem) {
+  .day { grid-template-columns: 1fr; }
+  .when { border-right: 0; border-bottom: 1px solid var(--line); }
+  .times { justify-content: center; }
+}

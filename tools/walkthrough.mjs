@@ -104,17 +104,26 @@ async function main() {
   // ------------------------------------------------------------- the front door
   console.log('Somebody typed the API port into a browser');
 
+  // Two right answers here, depending on which door this is pointed at. On the
+  // API's own port the root is JSON that says where the interface is; through
+  // the web container it is the interface itself, because nginx serves the
+  // application for everything that is not /api. Checking only for the first
+  // fails against the address the README tells people to open.
+  const servedByWeb = (answer) =>
+    typeof answer.body === 'string' && answer.body.toLowerCase().includes('<!doctype html');
+
   const front = await call('/');
   expect(
-    'the root says what this is and where the interface is',
-    front.status === 200 && typeof front.body?.the_interface_is_at === 'string',
-    `got ${front.status} — this used to be a bare "no such endpoint", which reads like a fault`
+    'the root is either the interface or a JSON note saying where it is',
+    front.status === 200 &&
+      (servedByWeb(front) || typeof front.body?.the_interface_is_at === 'string'),
+    `got ${front.status} — the API root used to be a bare "no such endpoint", which reads like a fault`
   );
 
   const missing = await call('/nothing-here');
   expect(
-    'and a wrong path says where the API starts',
-    missing.status === 404 && missing.body?.the_api_starts_at === '/api',
+    'and a path that is neither says where the API starts',
+    servedByWeb(missing) || (missing.status === 404 && missing.body?.the_api_starts_at === '/api'),
     `got ${missing.status}`
   );
 
@@ -157,6 +166,59 @@ async function main() {
     'the same exam is priced differently at each',
     northKnee && riverKnee && northKnee.price_cents !== riverKnee.price_cents,
     `${northKnee?.price_cents} against ${riverKnee?.price_cents}`
+  );
+
+  // ------------------------------------------------------------------ searching
+  console.log('\nThe search a person actually makes');
+
+  const twoMri = north.body.exams.filter((exam) => exam.modality === 'MR').slice(0, 2);
+  const together = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: twoMri.map((exam) => exam.id), category: 'private', part: 'any' },
+  });
+
+  expect(
+    'two exams in one visit come back as one appointment',
+    together.status === 200 && together.body.ok && together.body.days.length > 0,
+    JSON.stringify(together.body).slice(0, 200)
+  );
+  expect(
+    'and the duration and price are the sum of both',
+    together.body.minutes === twoMri[0].minutes + twoMri[1].minutes &&
+      together.body.priceCents === twoMri[0].price_cents + twoMri[1].price_cents,
+    `${together.body.minutes} minutes, ${together.body.priceCents} cents`
+  );
+  expect(
+    'the answer is days, each with its own times',
+    together.body.days.every((day) => day.date && Array.isArray(day.times) && day.times.length > 0)
+  );
+
+  const mri = north.body.exams.find((exam) => exam.modality === 'MR');
+  const xray = north.body.exams.find((exam) => exam.modality === 'XR');
+  const impossible = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: [mri.id, xray.id], category: 'private' },
+  });
+
+  expect(
+    'exams no single room can do are refused with a reason, not an empty list',
+    impossible.status === 200 && impossible.body.ok === false && impossible.body.reason === 'no_room_does_all',
+    JSON.stringify(impossible.body).slice(0, 160)
+  );
+
+  const mornings = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: [xray.id], category: 'private', part: 'morning' },
+  });
+
+  expect(
+    'asking for mornings gives mornings',
+    mornings.body.ok &&
+      mornings.body.days.every((day) => day.times.every((time) => new Date(time).getHours() < 13)),
+    'an afternoon slipped into a morning search'
   );
 
   // ------------------------------------------------------------------ booking

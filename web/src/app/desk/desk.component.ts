@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
+import { clock } from '../shell/dates';
 
 /**
  * The desk: one day, one centre, everything in it.
@@ -135,7 +136,5 @@ export class DeskComponent {
     return { exempt: 'Exempt', health_service: 'Health service', private: 'Private', insured: 'Insured' }[key] ?? key;
   }
 
-  clock(iso: string): string {
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
+  readonly clock = clock;
 }

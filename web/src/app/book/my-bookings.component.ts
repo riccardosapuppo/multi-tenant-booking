@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
+import { shortWhen } from '../shell/dates';
 
 /**
  * What this person has booked, at the centre they are looking at.
@@ -105,13 +106,5 @@ export class MyBookingsComponent {
     return (booking.exams ?? []).map((exam) => exam.name).join(', ') || '—';
   }
 
-  when(iso: string): string {
-    return new Date(iso).toLocaleString([], {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
+  readonly when = shortWhen;
 }

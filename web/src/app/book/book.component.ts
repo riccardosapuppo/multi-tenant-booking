@@ -1,323 +1,477 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { ApiService, Availability, Exam, Room } from '../shell/api.service';
+import { ApiService, Exam, SearchAnswer, SearchDay, Site } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
+import { clock, dayNumber, dayOfWeek, longDate, monthOf, yearOf } from '../shell/dates';
 
 /**
- * Booking, in the order somebody actually decides things.
+ * Booking, in the shape the original asked the question.
  *
- * What, then where, then who is paying, then when. The payment category is
- * asked before the times and not after, because it changes the answer: the
- * same morning is open for a private patient and full for an exempt one, and
- * an interface that offers times first has to take them away again.
+ * This is a deliberate reconstruction rather than a redesign, and the first
+ * attempt at it was neither: three numbered cards with radio buttons and
+ * dropdowns. Same data, different product — and the person whose system this
+ * is recognises it from the screen, not from the schema.
  *
- * When a session is closed for the chosen category the API says so, and this
- * says so too. "No times available" sends somebody to the telephone; "the
- * morning is full for exempt patients" tells them to try the afternoon or
- * change the category, which is a question they can answer themselves.
+ * So the skeleton is the original's, and each part of it is there for a reason
+ * that survives translation:
+ *
+ *   - **Panels that open one at a time, each with a tick once answered.** The
+ *     questions are not equally interesting: which site and which day are
+ *     usually "any", and burying them behind a closed panel with the answer on
+ *     the header is what keeps the screen down to one decision at a time.
+ *   - **"Add another exam".** People book a knee and a shoulder in one visit.
+ *     Making that an explicit button, rather than a multi-select, is what tells
+ *     somebody it is allowed — and the appointment that comes back is one
+ *     appointment, not two.
+ *   - **Preferences, not filters.** "Any day", "as soon as possible". They
+ *     narrow what is offered and never mean "show nothing".
+ *   - **Results as days.** A card per day with the date large and the price on
+ *     it, and the times beside it. Nobody books a room; they book a morning.
  */
+type Panel = 'site' | 'exams' | 'category' | 'day' | 'part' | null;
+
+const WEEKDAYS = [
+  { value: null as number | null, label: 'Any day' },
+  { value: 0, label: 'Monday' },
+  { value: 1, label: 'Tuesday' },
+  { value: 2, label: 'Wednesday' },
+  { value: 3, label: 'Thursday' },
+  { value: 4, label: 'Friday' },
+  { value: 5, label: 'Saturday' },
+  { value: 6, label: 'Sunday' },
+];
+
+const PARTS = [
+  { value: 'any', label: 'As soon as possible' },
+  { value: 'morning', label: 'Morning' },
+  { value: 'afternoon', label: 'Afternoon' },
+];
+
+const CATEGORIES = [
+  { value: 'private', label: 'Private' },
+  { value: 'health_service', label: 'National health service' },
+  { value: 'exempt', label: 'Exempt' },
+  { value: 'insured', label: 'Insured' },
+];
+
 @Component({
   selector: 'app-book',
   standalone: true,
   imports: [FormsModule],
   template: `
-    <h1>Book an appointment</h1>
-    <p class="lede">
-      At <strong>{{ session.centre() }}</strong>. Prices, rooms and opening hours all
-      belong to this centre — switch centres in the header and everything below changes.
-    </p>
+    <div class="notice">
+      Online booking at <strong>{{ session.centre() }}</strong> is for the exams listed
+      below. Everything here — the centre, the prices, the people — is invented for the
+      demonstration.
+    </div>
 
-    @if (done()) {
-      <div class="card">
+    @if (booked()) {
+      <section class="card done">
         <h2>Booked</h2>
         <p>
-          Your reference is <strong class="mono">{{ done()!.reference }}</strong>.
-          {{ formatWhen(done()!.starts_at) }}.
+          <strong class="mono ref">{{ booked()!.reference }}</strong>
         </p>
+        <p>{{ longDate(booked()!.starts_at) }} at {{ clock(booked()!.starts_at) }}</p>
         <button type="button" (click)="startAgain()">Book something else</button>
-      </div>
+      </section>
     } @else {
-      <div class="cards">
-        <section class="card">
-          <h2>1 &nbsp;What do you need?</h2>
-          @if (exams().length === 0) {
-            <p class="muted">This centre has nothing bookable online yet.</p>
-          }
-          <div class="grid-2">
-            @for (exam of exams(); track exam.id) {
-              <label class="row" style="align-items: flex-start; gap: 0.5rem">
-                <input
-                  type="radio"
-                  name="exam"
-                  style="width: auto; margin-top: 0.3rem"
-                  [checked]="exam.id === chosenExam()?.id"
-                  (change)="chooseExam(exam)"
-                />
-                <span>
-                  <strong>{{ exam.name }}</strong><br />
-                  <span class="muted">
-                    {{ exam.minutes }} minutes · {{ money(exam.price_cents) }}
-                  </span>
-                </span>
+      <!-- The panels. Closed shows the answer; open shows the question. -->
+      <div class="panels">
+        <section class="panel" [class.open]="panel() === 'site'">
+          <button type="button" class="head" (click)="toggle('site')">
+            <span class="tick" [class.set]="true">✓</span>
+            <span class="label">Site: <strong>{{ siteName() }}</strong></span>
+            <span class="chev">⌄</span>
+          </button>
+          @if (panel() === 'site') {
+            <div class="body">
+              <label class="choice">
+                <input type="radio" name="site" [checked]="siteId() === null" (change)="pickSite(null)" />
+                <span>Any site</span>
               </label>
-            }
-          </div>
+              @for (site of sites(); track site.id) {
+                <label class="choice">
+                  <input type="radio" name="site" [checked]="siteId() === site.id" (change)="pickSite(site.id)" />
+                  <span>{{ site.name }}<small>{{ site.address }}</small></span>
+                </label>
+              }
+            </div>
+          }
         </section>
 
-        @if (chosenExam()) {
-          <section class="card">
-            <h2>2 &nbsp;Where, and who is paying?</h2>
-            <div class="grid-2">
-              <label class="field">
-                <span>Room</span>
-                <select [value]="chosenRoom()?.id ?? ''" (change)="chooseRoom($event)">
-                  @for (room of rooms(); track room.id) {
-                    <option [value]="room.id">{{ room.site_name }} — {{ room.name }}</option>
-                  }
-                </select>
-              </label>
+        <section class="panel" [class.open]="panel() === 'exams'">
+          <button type="button" class="head" (click)="toggle('exams')">
+            <span class="tick" [class.set]="chosen().length > 0">{{ chosen().length > 0 ? '✓' : '·' }}</span>
+            <span class="label">
+              @if (chosen().length === 0) {
+                Choose an exam or a visit from the list
+              } @else {
+                <strong>{{ chosen()[0]!.name }}</strong>
+                @if (chosen().length > 1) {
+                  <small>and {{ chosen().length - 1 }} more</small>
+                }
+              }
+            </span>
+            <span class="chev">⌄</span>
+          </button>
 
-              <label class="field">
-                <span>Payment category</span>
-                <select [value]="category()" (change)="chooseCategory($event)">
-                  <option value="private">Private</option>
-                  <option value="health_service">National health service</option>
-                  <option value="exempt">Exempt</option>
-                  <option value="insured">Insured</option>
-                </select>
-              </label>
-
-              <label class="field">
-                <span>Day</span>
-                <input type="date" [value]="day()" (change)="chooseDay($event)" />
-              </label>
-
-              <label class="field">
-                <span>Patient name</span>
-                <input [(ngModel)]="patientName" name="patient" />
-              </label>
+          @if (chosen().length > 0 && panel() !== 'exams') {
+            <div class="picked">
+              @for (exam of chosen(); track exam.id) {
+                <div class="one">
+                  <span>{{ exam.name }}<small>{{ exam.minutes }} min · {{ money(exam.price_cents) }}</small></span>
+                  <button type="button" class="link" (click)="remove(exam)">Remove</button>
+                </div>
+              }
+              <button type="button" class="add" (click)="toggle('exams')">Add another exam ＋</button>
             </div>
-          </section>
+          }
 
-          <section class="card">
-            <h2>3 &nbsp;When?</h2>
+          @if (panel() === 'exams') {
+            <div class="body">
+              <input
+                class="filter"
+                placeholder="Type to narrow the list…"
+                [value]="filter()"
+                (input)="setFilter($event)"
+              />
+              <div class="list">
+                @for (exam of visible(); track exam.id) {
+                  <label class="choice">
+                    <input type="checkbox" [checked]="isChosen(exam)" (change)="flip(exam)" />
+                    <span>
+                      {{ exam.name }}
+                      <small>{{ exam.modality }} · {{ exam.minutes }} min · {{ money(exam.price_cents) }}</small>
+                    </span>
+                  </label>
+                }
+                @if (visible().length === 0) {
+                  <p class="muted">Nothing here matches that.</p>
+                }
+              </div>
+            </div>
+          }
+        </section>
 
-            @if (loadingTimes()) {
-              <p class="muted">Looking…</p>
+        <section class="panel" [class.open]="panel() === 'category'">
+          <button type="button" class="head" (click)="toggle('category')">
+            <span class="tick set">✓</span>
+            <span class="label">Paying as: <strong>{{ categoryLabel() }}</strong></span>
+            <span class="chev">⌄</span>
+          </button>
+          @if (panel() === 'category') {
+            <div class="body">
+              @for (option of categories; track option.value) {
+                <label class="choice">
+                  <input
+                    type="radio"
+                    name="category"
+                    [checked]="category() === option.value"
+                    (change)="pickCategory(option.value)"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              }
+              <p class="muted small">
+                This changes the answer, not just the price: a session can be full for one
+                category and open for another.
+              </p>
+            </div>
+          }
+        </section>
+
+        <section class="panel" [class.open]="panel() === 'day'">
+          <button type="button" class="head" (click)="toggle('day')">
+            <span class="tick set">✓</span>
+            <span class="label">Preferred day: <strong>{{ weekdayLabel() }}</strong></span>
+            <span class="chev">⌄</span>
+          </button>
+          @if (panel() === 'day') {
+            <div class="body">
+              @for (option of weekdays; track option.label) {
+                <label class="choice">
+                  <input
+                    type="radio"
+                    name="weekday"
+                    [checked]="weekday() === option.value"
+                    (change)="pickWeekday(option.value)"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="panel" [class.open]="panel() === 'part'">
+          <button type="button" class="head" (click)="toggle('part')">
+            <span class="tick set">✓</span>
+            <span class="label">When: <strong>{{ partLabel() }}</strong></span>
+            <span class="chev">⌄</span>
+          </button>
+          @if (panel() === 'part') {
+            <div class="body">
+              @for (option of parts; track option.value) {
+                <label class="choice">
+                  <input
+                    type="radio"
+                    name="part"
+                    [checked]="part() === option.value"
+                    (change)="pickPart(option.value)"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      <button class="search" type="button" [disabled]="chosen().length === 0 || searching()" (click)="find()">
+        {{ searching() ? 'Searching…' : 'Search' }}
+      </button>
+
+      @if (answer(); as found) {
+        @if (!found.ok) {
+          <p class="note bad">
+            @if (found.reason === 'no_room_does_all') {
+              These exams cannot be done in one visit at this centre — no room performs all
+              of them. Book them separately, or choose a different site.
+            } @else if (found.reason === 'not_bookable_online') {
+              {{ (found.exams ?? [])[0]?.name }} cannot be booked online. Please ring the
+              centre.
             } @else {
-              @if (times().length > 0) {
+              That exam is not offered here.
+            }
+          </p>
+        } @else {
+          <div class="results">
+            <div class="regime">{{ categoryLabel() }} · {{ found.minutes }} minutes · {{ money(found.priceCents) }}</div>
+
+            @for (day of found.days; track day.date) {
+              <article class="day">
+                <div class="when">
+                  <p class="dow">{{ dayOfWeek(day.date) }}</p>
+                  <p class="num">{{ dayNumber(day.date) }}</p>
+                  <p class="mon">{{ monthOf(day.date) }}</p>
+                  <p class="yr">{{ yearOf(day.date) }}</p>
+                  <p class="price">{{ money(day.priceCents) }}</p>
+                  <p class="with">WITH</p>
+                  <p class="chip">{{ day.modality }}</p>
+                  <p class="with">SITE</p>
+                  <p class="site">{{ day.siteName }}</p>
+                </div>
                 <div class="times">
-                  @for (time of times(); track time) {
-                    <button
-                      type="button"
-                      [class.picked]="time === chosenTime()"
-                      (click)="chooseTime(time)"
-                    >
+                  @for (time of day.times; track time) {
+                    <button type="button" (click)="choose(day, time)" [disabled]="booking()">
                       {{ clock(time) }}
                     </button>
                   }
                 </div>
-              } @else {
-                <p class="muted">Nothing free on this day.</p>
-              }
-
-              @for (shut of closed(); track shut.session) {
-                <p class="note warn" style="margin-top: 0.8rem">
-                  {{ shut.opens }}–{{ shut.closes }}:
-                  {{
-                    shut.reason === 'category_full'
-                      ? 'the quota for this payment category is used up. Another category, or another day, may be open.'
-                      : 'this session is full.'
-                  }}
-                </p>
-              }
+              </article>
             }
-          </section>
 
-          @if (chosenTime()) {
-            <section class="card spread">
-              <div>
-                <strong>{{ chosenExam()!.name }}</strong>, {{ formatWhen(chosenTime()!) }}<br />
-                <span class="muted">
-                  {{ chosenRoom()?.site_name }} · {{ money(chosenExam()!.price_cents) }} ·
-                  {{ categoryName() }}
-                </span>
-              </div>
-              <button type="button" [disabled]="booking()" (click)="confirm()">
-                {{ booking() ? 'Booking…' : 'Confirm' }}
-              </button>
-            </section>
-          }
+            @if (found.days.length === 0) {
+              <p class="note warn">
+                Nothing free in the next three weeks with those preferences.
+                @for (shut of found.closed; track shut.day) {
+                  <br />{{ shut.day }}, {{ shut.opens }}–{{ shut.closes }}:
+                  {{ shut.reason === 'category_full' ? 'the quota for this payment category is used up' : 'full' }}.
+                }
+              </p>
+            }
+          </div>
         }
-      </div>
+      }
 
       @if (problem()) {
-        <p class="note bad" style="margin-top: 1rem">{{ problem() }}</p>
+        <p class="note bad">{{ problem() }}</p>
       }
     }
   `,
+  styleUrl: './book.component.css',
 })
 export class BookComponent {
   private readonly api = inject(ApiService);
   readonly session = inject(SessionService);
 
+  readonly weekdays = WEEKDAYS;
+  readonly parts = PARTS;
+  readonly categories = CATEGORIES;
+
   readonly exams = signal<Exam[]>([]);
-  readonly rooms = signal<Room[]>([]);
-  readonly chosenExam = signal<Exam | null>(null);
-  readonly chosenRoom = signal<Room | null>(null);
+  readonly sites = signal<Site[]>([]);
+  readonly chosen = signal<Exam[]>([]);
+  readonly siteId = signal<number | null>(null);
   readonly category = signal('private');
-  readonly day = signal(inAWeek());
-  readonly times = signal<string[]>([]);
-  readonly closed = signal<Availability['closed']>([]);
-  readonly loadingTimes = signal(false);
-  readonly chosenTime = signal<string | null>(null);
+  readonly weekday = signal<number | null>(null);
+  readonly part = signal('any');
+  readonly filter = signal('');
+
+  readonly panel = signal<Panel>('exams');
+  readonly searching = signal(false);
   readonly booking = signal(false);
+  readonly answer = signal<SearchAnswer | null>(null);
   readonly problem = signal<string | null>(null);
-  readonly done = signal<{ reference: string; starts_at: string } | null>(null);
+  readonly booked = signal<{ reference: string; starts_at: string } | null>(null);
 
-  patientName = '';
+  readonly siteName = computed(() => {
+    const id = this.siteId();
+    if (id === null) return 'Any';
+    return this.sites().find((site) => site.id === id)?.name ?? 'Any';
+  });
 
-  readonly categoryName = computed(
-    () =>
-      ({
-        private: 'Private',
-        health_service: 'National health service',
-        exempt: 'Exempt',
-        insured: 'Insured',
-      })[this.category()] ?? this.category()
+  readonly categoryLabel = computed(
+    () => CATEGORIES.find((one) => one.value === this.category())?.label ?? this.category()
+  );
+  readonly weekdayLabel = computed(
+    () => WEEKDAYS.find((one) => one.value === this.weekday())?.label ?? 'Any day'
+  );
+  readonly partLabel = computed(
+    () => PARTS.find((one) => one.value === this.part())?.label ?? 'As soon as possible'
   );
 
-  constructor() {
-    this.patientName = this.session.account()?.name ?? '';
-    this.load();
-  }
+  readonly visible = computed(() => {
+    const needle = this.filter().trim().toLowerCase();
+    const all = this.exams();
+    if (!needle) return all;
+    return all.filter(
+      (exam) =>
+        exam.name.toLowerCase().includes(needle) || exam.modality.toLowerCase().includes(needle)
+    );
+  });
 
-  private load(): void {
+  constructor() {
     this.api.exams().subscribe({
       next: (answer) => this.exams.set(answer.exams),
-      error: () => this.problem.set('Could not read this centre’s price list.'),
+      error: () => this.problem.set('Could not read this centre’s list of exams.'),
     });
+    this.api.sites().subscribe({ next: (answer) => this.sites.set(answer.sites) });
   }
 
-  chooseExam(exam: Exam): void {
-    this.chosenExam.set(exam);
-    this.chosenTime.set(null);
-    this.api.rooms(exam.id).subscribe({
-      next: (answer) => {
-        this.rooms.set(answer.rooms);
-        this.chosenRoom.set(answer.rooms[0] ?? null);
-        this.lookForTimes();
-      },
-    });
+  toggle(which: Exclude<Panel, null>): void {
+    this.panel.set(this.panel() === which ? null : which);
   }
 
-  chooseRoom(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
-    this.chosenRoom.set(this.rooms().find((room) => room.id === id) ?? null);
-    this.lookForTimes();
+  setFilter(event: Event): void {
+    this.filter.set((event.target as HTMLInputElement).value);
   }
 
-  chooseCategory(event: Event): void {
-    this.category.set((event.target as HTMLSelectElement).value);
-    this.lookForTimes();
+  isChosen(exam: Exam): boolean {
+    return this.chosen().some((one) => one.id === exam.id);
   }
 
-  chooseDay(event: Event): void {
-    this.day.set((event.target as HTMLInputElement).value);
-    this.lookForTimes();
+  flip(exam: Exam): void {
+    this.answer.set(null);
+    this.chosen.set(
+      this.isChosen(exam)
+        ? this.chosen().filter((one) => one.id !== exam.id)
+        : [...this.chosen(), exam]
+    );
   }
 
-  chooseTime(time: string): void {
-    this.chosenTime.set(time);
+  remove(exam: Exam): void {
+    this.answer.set(null);
+    this.chosen.set(this.chosen().filter((one) => one.id !== exam.id));
   }
 
-  private lookForTimes(): void {
-    const exam = this.chosenExam();
-    const room = this.chosenRoom();
-    if (!exam || !room) return;
-
-    this.loadingTimes.set(true);
-    this.chosenTime.set(null);
-
-    this.api.availability(room.id, exam.id, this.category(), this.day()).subscribe({
-      next: (answer) => {
-        this.loadingTimes.set(false);
-        this.times.set(answer.times);
-        this.closed.set(answer.closed);
-      },
-      error: () => {
-        this.loadingTimes.set(false);
-        this.times.set([]);
-        this.problem.set('Could not read the diary.');
-      },
-    });
+  pickSite(id: number | null): void {
+    this.siteId.set(id);
+    this.answer.set(null);
+    this.panel.set(null);
   }
 
-  confirm(): void {
-    const exam = this.chosenExam();
-    const room = this.chosenRoom();
-    const time = this.chosenTime();
-    if (!exam || !room || !time) return;
+  pickCategory(value: string): void {
+    this.category.set(value);
+    this.answer.set(null);
+    this.panel.set(null);
+  }
 
+  pickWeekday(value: number | null): void {
+    this.weekday.set(value);
+    this.answer.set(null);
+    this.panel.set(null);
+  }
+
+  pickPart(value: string): void {
+    this.part.set(value);
+    this.answer.set(null);
+    this.panel.set(null);
+  }
+
+  find(): void {
+    if (this.chosen().length === 0) return;
+
+    this.searching.set(true);
+    this.problem.set(null);
+    this.panel.set(null);
+
+    this.api
+      .search({
+        examIds: this.chosen().map((exam) => exam.id),
+        category: this.category(),
+        siteId: this.siteId(),
+        weekday: this.weekday(),
+        part: this.part(),
+      })
+      .subscribe({
+        next: (found) => {
+          this.searching.set(false);
+          this.answer.set(found);
+        },
+        error: () => {
+          this.searching.set(false);
+          this.problem.set('The search did not go through.');
+        },
+      });
+  }
+
+  choose(day: SearchDay, time: string): void {
     this.booking.set(true);
     this.problem.set(null);
 
     this.api
       .book({
-        roomId: room.id,
+        roomId: day.roomId,
         startsAt: time,
-        examIds: [exam.id],
-        patientName: this.patientName.trim() || (this.session.account()?.name ?? 'Demo Patient'),
+        examIds: this.chosen().map((exam) => exam.id),
+        patientName: this.session.account()?.name ?? 'Demo Patient',
         category: this.category(),
       })
       .subscribe({
-        next: (answer) => {
+        next: (made) => {
           this.booking.set(false);
-          this.done.set(answer.booking);
+          this.booked.set(made.booking);
         },
         error: (error) => {
           this.booking.set(false);
-          // 409 is somebody else taking it between the offer and the answer.
-          // It is nobody's fault and the times are refreshed rather than the
-          // caller being left looking at one that has gone.
-          this.problem.set(
-            error.status === 409
-              ? 'That time has just been taken. These are the times still free.'
-              : 'The booking did not go through.'
-          );
-          if (error.status === 409) this.lookForTimes();
+          if (error.status === 409) {
+            this.problem.set('That time has just been taken. These are the times still free.');
+            this.find();
+          } else {
+            this.problem.set('The booking did not go through.');
+          }
         },
       });
   }
 
   startAgain(): void {
-    this.done.set(null);
-    this.chosenTime.set(null);
-    this.lookForTimes();
+    this.booked.set(null);
+    this.answer.set(null);
+    this.chosen.set([]);
+    this.panel.set('exams');
   }
 
   money(cents: number): string {
     return `€${(cents / 100).toFixed(2)}`;
   }
 
-  clock(iso: string): string {
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  formatWhen(iso: string): string {
-    return new Date(iso).toLocaleString([], {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-}
-
-function inAWeek(): string {
-  const day = new Date();
-  day.setDate(day.getDate() + 7);
-  return day.toISOString().slice(0, 10);
+  // One locale for the whole interface: see shell/dates.ts.
+  readonly clock = clock;
+  readonly dayOfWeek = dayOfWeek;
+  readonly dayNumber = dayNumber;
+  readonly monthOf = monthOf;
+  readonly yearOf = yearOf;
+  readonly longDate = longDate;
 }
