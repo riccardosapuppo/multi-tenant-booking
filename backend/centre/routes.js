@@ -13,6 +13,7 @@
 const express = require('express');
 
 const store = require('../booking/store');
+const availability = require('../booking/availability');
 const access = require('../auth/access');
 const { tenantPool } = require('../db/pools');
 
@@ -27,7 +28,7 @@ router.get('/diary', access.signedIn(), access.atLeast('staff'), async (req, res
     const bookings = await store.diary(req.tenant, day);
     res.json({
       centre: req.tenant.slug,
-      day: day.toISOString().slice(0, 10),
+      day: availability.asDay(day),
       bookings,
       // Useful at a glance, and cheap: it is the same rows.
       totals: bookings.reduce(

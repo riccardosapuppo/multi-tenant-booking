@@ -148,13 +148,13 @@ async function search(
         break;
       }
 
-      for (const shut of found.closed) closed.push({ day: day.toISOString().slice(0, 10), ...shut });
+      for (const shut of found.closed) closed.push({ day: availability.asDay(day), ...shut });
     }
 
     if (times.length === 0 || !room) continue;
 
     days.push({
-      date: day.toISOString().slice(0, 10),
+      date: availability.asDay(day),
       priceCents,
       minutes,
       siteName: room.site_name,

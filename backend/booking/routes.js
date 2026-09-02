@@ -4,6 +4,7 @@ const express = require('express');
 
 const store = require('./store');
 const { search } = require('./search');
+const availability = require('./availability');
 const access = require('../auth/access');
 
 const router = express.Router();
@@ -73,7 +74,7 @@ router.get('/availability', async (req, res, next) => {
 
     res.json({
       centre: req.tenant.slug,
-      day: day.toISOString().slice(0, 10),
+      day: availability.asDay(day),
       minutes: exam.minutes,
       times: times.map((slot) => slot.starts.toISOString()),
       // Sent even when empty. An afternoon that is closed for this category is

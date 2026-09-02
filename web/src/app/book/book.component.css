@@ -1,12 +1,16 @@
-/* The booking screen, laid out the way the original laid it out: a notice, a
-   stack of panels that open one at a time, a search button, and results as
-   days with their times beside them. */
+/* The booking screen: a notice, a stack of panels that open one at a time, and
+   a search button. The answer is a dialog — see results.component.css.
+
+   The motion here is doing one job: telling somebody their click landed, and
+   which of the five panels is now the open one. Every transition below is
+   under 200ms and every one of them is switched off under
+   prefers-reduced-motion, at the bottom of the file. */
 
 .notice {
   background: var(--surface);
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 9px 9px 0;
   padding: 0.8rem 1rem;
   margin-bottom: 1.1rem;
   color: var(--ink-soft);
@@ -18,11 +22,17 @@
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 11px;
   overflow: hidden;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.panel.open { border-color: var(--accent); }
+/* The open panel is lifted rather than merely outlined: with five of them
+   stacked, a colour change on a 1px border is easy to miss. */
+.panel.open {
+  border-color: var(--accent-line);
+  box-shadow: 0 6px 20px -12px color-mix(in srgb, var(--accent) 60%, transparent);
+}
 
 .head {
   display: flex;
@@ -37,41 +47,79 @@
   font-weight: 450;
   text-align: left;
   cursor: pointer;
+  transition: background 140ms ease;
 }
 
-.head:hover { background: var(--hover); }
+.head:hover { background: var(--hover); filter: none; }
+.head:active { transform: none; }
 
 .tick {
   flex: none;
   display: grid;
   place-items: center;
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.45rem;
+  height: 1.45rem;
   border-radius: 50%;
   background: var(--hover);
   color: var(--ink-faint);
   font-size: 0.8rem;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
 }
 
-.tick.set { background: var(--accent); color: #fff; }
+/* When a panel is answered its tick fills. The small overshoot is the whole
+   of the feedback: something was recorded, and this is the thing that
+   recorded it. */
+.tick.set {
+  background: var(--accent);
+  color: #fff;
+  animation: ticked 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-.label { flex: 1; }
-.label small { color: var(--ink-faint); margin-left: 0.4rem; }
+@keyframes ticked {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
 
-.chev { color: var(--ink-faint); transition: transform 0.15s; }
+/* The panel header carries the answer, not a label. It was class="label",
+   which the shared stylesheet later gave uppercase and letter-spacing to —
+   so "Choose an exam or a visit from the list" became small caps across two
+   lines on a phone. Two different jobs had one class name. */
+.said { flex: 1; }
+.said small { color: var(--ink-faint); margin-left: 0.4rem; }
+
+.chev { color: var(--ink-faint); transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1); }
 .panel.open .chev { transform: rotate(180deg); }
 
-.body { padding: 0.2rem 1.1rem 1rem; border-top: 1px solid var(--line); }
+/* The body unrolls. `grid-template-rows` from 0fr to 1fr is the one way to
+   animate to content height without hard-coding a max-height that is either
+   too small for a long list or leaves the animation hanging on a short one. */
+.body {
+  padding: 0.2rem 1.1rem 1rem;
+  border-top: 1px solid var(--line);
+  animation: unroll 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes unroll {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
 
 .choice {
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background 120ms ease;
 }
 
-.choice input { width: auto; margin-top: 0.25rem; flex: none; }
+.choice:hover { background: var(--hover); }
+.choice:active { background: var(--accent-soft); }
+
+.choice input { width: auto; margin-top: 0.25rem; flex: none; accent-color: var(--accent); }
 .choice span { display: block; }
 .choice small { display: block; color: var(--ink-faint); font-size: 0.85rem; }
 
@@ -85,8 +133,9 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 0.55rem 0;
+  padding: 0.6rem 0;
   border-top: 1px dashed var(--line);
+  animation: unroll 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .picked .one small { display: block; color: var(--ink-faint); font-size: 0.85rem; }
@@ -101,114 +150,49 @@
   font-weight: 450;
 }
 
+.link:hover { text-decoration: underline; filter: none; }
+
 .add {
   margin-top: 0.6rem;
   width: 100%;
   background: var(--accent-soft);
   color: var(--accent-ink);
-  border: 1px dashed var(--accent);
+  border: 1px dashed var(--accent-line);
   font-weight: 550;
 }
 
+.add:hover { background: var(--accent); color: #fff; border-style: solid; filter: none; }
+
 .search {
   width: 100%;
-  margin: 1.1rem 0 1.5rem;
-  padding: 0.85rem;
+  margin: 1.15rem 0 1.5rem;
+  padding: 0.9rem;
   font-size: 1.02rem;
+  letter-spacing: 0.01em;
 }
 
-.regime {
-  text-align: center;
-  padding: 0.55rem;
-  margin-bottom: 0.75rem;
-  background: var(--hover);
-  border-radius: 8px;
-  color: var(--ink-soft);
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
+.done { text-align: center; padding: 2.5rem 1.25rem; }
 
-.results { display: flex; flex-direction: column; gap: 0.7rem; }
-
-.day {
-  display: grid;
-  grid-template-columns: 12.5rem 1fr;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.when {
-  padding: 1rem;
-  text-align: center;
-  border-right: 1px solid var(--line);
-}
-
-.when p { margin: 0; line-height: 1.25; }
-.dow { color: var(--ink-soft); font-size: 0.92rem; }
-.num { font-size: 2.1rem; font-weight: 600; letter-spacing: -0.02em; }
-.mon { color: var(--ink-soft); }
-.yr { color: var(--ink-faint); font-size: 0.85rem; }
-
-.price {
+.done .ref {
   display: inline-block;
-  margin-top: 0.55rem !important;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background: var(--warn-soft);
-  color: var(--warn);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.with {
-  margin-top: 0.7rem !important;
-  color: var(--ink-faint);
-  font-size: 0.7rem;
+  margin: 0.3rem 0 0.6rem;
+  font-size: 1.75rem;
   letter-spacing: 0.1em;
-}
-
-.chip {
-  display: inline-block;
-  padding: 0.1rem 0.55rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
   color: var(--accent-ink);
-  font-size: 0.85rem;
+  background: var(--accent-soft);
+  padding: 0.35rem 0.9rem;
+  border-radius: 10px;
 }
-
-.site { color: var(--accent); font-size: 0.88rem; }
-
-.times {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 0.5rem;
-  padding: 1rem;
-}
-
-.times button {
-  min-width: 5.2rem;
-  padding: 0.55rem 0.4rem;
-  background: var(--accent);
-  color: #fff;
-  border: 0;
-  border-radius: 7px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-}
-
-.times button:hover:not(:disabled) { filter: brightness(1.12); }
-
-.done { text-align: center; padding: 2rem 1.25rem; }
-.done .ref { font-size: 1.6rem; letter-spacing: 0.08em; }
 
 .small { font-size: 0.85rem; }
 
 @media (max-width: 40rem) {
-  .day { grid-template-columns: 1fr; }
-  .when { border-right: 0; border-bottom: 1px solid var(--line); }
-  .times { justify-content: center; }
+  .head { padding: 0.85rem 0.9rem; gap: 0.6rem; }
+  .body, .picked { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .list { max-height: 17rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel, .head, .tick, .chev, .choice { transition: none; }
+  .tick.set, .body, .picked .one { animation: none; }
 }

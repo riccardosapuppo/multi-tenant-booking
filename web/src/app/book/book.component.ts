@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 
 import { ApiService, Exam, SearchAnswer, SearchDay, Site } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
-import { clock, dayNumber, dayOfWeek, longDate, monthOf, yearOf } from '../shell/dates';
+import { clock, longDate } from '../shell/dates';
+import { ResultsComponent } from './results.component';
 
 /**
  * Booking, in the shape the original asked the question.
@@ -58,7 +59,7 @@ const CATEGORIES = [
 @Component({
   selector: 'app-book',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ResultsComponent],
   template: `
     <div class="notice">
       Online booking at <strong>{{ session.centre() }}</strong> is for the exams listed
@@ -81,7 +82,7 @@ const CATEGORIES = [
         <section class="panel" [class.open]="panel() === 'site'">
           <button type="button" class="head" (click)="toggle('site')">
             <span class="tick" [class.set]="true">✓</span>
-            <span class="label">Site: <strong>{{ siteName() }}</strong></span>
+            <span class="said">Site: <strong>{{ siteName() }}</strong></span>
             <span class="chev">⌄</span>
           </button>
           @if (panel() === 'site') {
@@ -103,7 +104,7 @@ const CATEGORIES = [
         <section class="panel" [class.open]="panel() === 'exams'">
           <button type="button" class="head" (click)="toggle('exams')">
             <span class="tick" [class.set]="chosen().length > 0">{{ chosen().length > 0 ? '✓' : '·' }}</span>
-            <span class="label">
+            <span class="said">
               @if (chosen().length === 0) {
                 Choose an exam or a visit from the list
               } @else {
@@ -157,7 +158,7 @@ const CATEGORIES = [
         <section class="panel" [class.open]="panel() === 'category'">
           <button type="button" class="head" (click)="toggle('category')">
             <span class="tick set">✓</span>
-            <span class="label">Paying as: <strong>{{ categoryLabel() }}</strong></span>
+            <span class="said">Paying as: <strong>{{ categoryLabel() }}</strong></span>
             <span class="chev">⌄</span>
           </button>
           @if (panel() === 'category') {
@@ -184,7 +185,7 @@ const CATEGORIES = [
         <section class="panel" [class.open]="panel() === 'day'">
           <button type="button" class="head" (click)="toggle('day')">
             <span class="tick set">✓</span>
-            <span class="label">Preferred day: <strong>{{ weekdayLabel() }}</strong></span>
+            <span class="said">Preferred day: <strong>{{ weekdayLabel() }}</strong></span>
             <span class="chev">⌄</span>
           </button>
           @if (panel() === 'day') {
@@ -207,7 +208,7 @@ const CATEGORIES = [
         <section class="panel" [class.open]="panel() === 'part'">
           <button type="button" class="head" (click)="toggle('part')">
             <span class="tick set">✓</span>
-            <span class="label">When: <strong>{{ partLabel() }}</strong></span>
+            <span class="said">When: <strong>{{ partLabel() }}</strong></span>
             <span class="chev">⌄</span>
           </button>
           @if (panel() === 'part') {
@@ -232,63 +233,23 @@ const CATEGORIES = [
         {{ searching() ? 'Searching…' : 'Search' }}
       </button>
 
-      @if (answer(); as found) {
-        @if (!found.ok) {
-          <p class="note bad">
-            @if (found.reason === 'no_room_does_all') {
-              These exams cannot be done in one visit at this centre — no room performs all
-              of them. Book them separately, or choose a different site.
-            } @else if (found.reason === 'not_bookable_online') {
-              {{ (found.exams ?? [])[0]?.name }} cannot be booked online. Please ring the
-              centre.
-            } @else {
-              That exam is not offered here.
-            }
-          </p>
-        } @else {
-          <div class="results">
-            <div class="regime">{{ categoryLabel() }} · {{ found.minutes }} minutes · {{ money(found.priceCents) }}</div>
-
-            @for (day of found.days; track day.date) {
-              <article class="day">
-                <div class="when">
-                  <p class="dow">{{ dayOfWeek(day.date) }}</p>
-                  <p class="num">{{ dayNumber(day.date) }}</p>
-                  <p class="mon">{{ monthOf(day.date) }}</p>
-                  <p class="yr">{{ yearOf(day.date) }}</p>
-                  <p class="price">{{ money(day.priceCents) }}</p>
-                  <p class="with">WITH</p>
-                  <p class="chip">{{ day.modality }}</p>
-                  <p class="with">SITE</p>
-                  <p class="site">{{ day.siteName }}</p>
-                </div>
-                <div class="times">
-                  @for (time of day.times; track time) {
-                    <button type="button" (click)="choose(day, time)" [disabled]="booking()">
-                      {{ clock(time) }}
-                    </button>
-                  }
-                </div>
-              </article>
-            }
-
-            @if (found.days.length === 0) {
-              <p class="note warn">
-                Nothing free in the next three weeks with those preferences.
-                @for (shut of found.closed; track shut.day) {
-                  <br />{{ shut.day }}, {{ shut.opens }}–{{ shut.closes }}:
-                  {{ shut.reason === 'category_full' ? 'the quota for this payment category is used up' : 'full' }}.
-                }
-              </p>
-            }
-          </div>
-        }
-      }
-
       @if (problem()) {
         <p class="note bad">{{ problem() }}</p>
       }
     }
+
+    <!-- The answer, over the question that asked for it. The search has a long
+         preamble, and showing the times underneath starts them below the fold
+         on a laptop — so every refinement scrolls you away from the thing you
+         are refining. -->
+    <app-results
+      [open]="showing()"
+      [answer]="answer()"
+      [title]="chosenNames()"
+      [terms]="terms()"
+      (closed)="showing.set(false)"
+      (chosen)="choose($event.day, $event.time)"
+    />
   `,
   styleUrl: './book.component.css',
 })
@@ -316,6 +277,10 @@ export class BookComponent {
   readonly problem = signal<string | null>(null);
   readonly booked = signal<{ reference: string; starts_at: string } | null>(null);
 
+  /** Whether the answer is on screen. Separate from having an answer: the
+   * dialog can be closed and reopened without searching again. */
+  readonly showing = signal(false);
+
   readonly siteName = computed(() => {
     const id = this.siteId();
     if (id === null) return 'Any';
@@ -331,6 +296,22 @@ export class BookComponent {
   readonly partLabel = computed(
     () => PARTS.find((one) => one.value === this.part())?.label ?? 'As soon as possible'
   );
+
+  /** What the dialog is answering about, for its header. */
+  readonly chosenNames = computed(() => {
+    const names = this.chosen().map((exam) => exam.name);
+    if (names.length === 0) return 'Available times';
+    if (names.length === 1) return names[0]!;
+    return `${names[0]} + ${names.length - 1} more`;
+  });
+
+  /** The terms it was asked under, said the way the original said them. */
+  readonly terms = computed(() => {
+    const bits = [this.categoryLabel(), this.siteName() === 'Any' ? 'any site' : this.siteName()];
+    if (this.weekday() !== null) bits.push(this.weekdayLabel());
+    if (this.part() !== 'any') bits.push(this.partLabel());
+    return bits.join(' · ');
+  });
 
   readonly visible = computed(() => {
     const needle = this.filter().trim().toLowerCase();
@@ -419,6 +400,7 @@ export class BookComponent {
         next: (found) => {
           this.searching.set(false);
           this.answer.set(found);
+          this.showing.set(true);
         },
         error: () => {
           this.searching.set(false);
@@ -428,6 +410,9 @@ export class BookComponent {
   }
 
   choose(day: SearchDay, time: string): void {
+    // Closed the moment a time is picked. Leaving it up while the booking is
+    // in flight invites a second click on a second time.
+    this.showing.set(false);
     this.booking.set(true);
     this.problem.set(null);
 
@@ -469,9 +454,5 @@ export class BookComponent {
 
   // One locale for the whole interface: see shell/dates.ts.
   readonly clock = clock;
-  readonly dayOfWeek = dayOfWeek;
-  readonly dayNumber = dayNumber;
-  readonly monthOf = monthOf;
-  readonly yearOf = yearOf;
   readonly longDate = longDate;
 }

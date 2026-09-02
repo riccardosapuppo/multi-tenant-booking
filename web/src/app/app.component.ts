@@ -1,6 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
+import { LogoComponent } from './shell/logo.component';
+
 import { ApiService } from './shell/api.service';
 import { SessionService } from './shell/session.service';
 
@@ -26,13 +28,20 @@ import { SessionService } from './shell/session.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent],
   template: `
     <header class="top">
-      <div class="brand">
-        <span class="mark" aria-hidden="true"></span>
-        <span>Booking</span>
-      </div>
+      <div class="bar">
+        <div class="brand">
+          <app-logo [size]="30" />
+          <span class="wordmark">
+            <strong>Booking</strong>
+            <!-- The centre, in the identity. On a platform where the same code
+                 serves several of them, which one you are in is not a setting
+                 tucked away in a menu. -->
+            <span>{{ session.centre() ?? 'no centre' }}</span>
+          </span>
+        </div>
 
       @if (session.signedIn()) {
         <nav>
@@ -67,6 +76,7 @@ import { SessionService } from './shell/session.service';
           <button type="button" class="quiet" (click)="signOut()">Sign out</button>
         </div>
       }
+      </div>
     </header>
 
     <main>

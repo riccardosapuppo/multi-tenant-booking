@@ -194,6 +194,23 @@ async function main() {
     together.body.days.every((day) => day.date && Array.isArray(day.times) && day.times.length > 0)
   );
 
+  // The label and the contents have to be the same day. They were not: the
+  // date was formatted with toISOString on a local midnight, so in a container
+  // at +2 every day came back labelled with the one before — "Sunday 6" above
+  // a list of Monday's appointments, which is somebody arriving on the wrong
+  // day. Checked here because it is invisible in any test that does not
+  // compare the two.
+  const mislabelled = together.body.days.filter((day) => {
+    const label = new Date(`${day.date}T00:00:00`).getDay();
+    return day.times.some((time) => new Date(time).getDay() !== label);
+  });
+
+  expect(
+    'and each day is labelled with the day its times are on',
+    mislabelled.length === 0,
+    mislabelled.map((day) => `${day.date} holds ${new Date(day.times[0]).toDateString()}`).join('; ')
+  );
+
   const mri = north.body.exams.find((exam) => exam.modality === 'MR');
   const xray = north.body.exams.find((exam) => exam.modality === 'XR');
   const impossible = await call('/api/centre/search', {

@@ -50,6 +50,24 @@ function weekdayIndex(date) {
   return (date.getDay() + 6) % 7;
 }
 
+/**
+ * A day as `YYYY-MM-DD`, in the zone the clinic is in.
+ *
+ * `toISOString().slice(0, 10)` was used for this and was wrong everywhere it
+ * appeared. It converts to UTC first, so midnight local in a container running
+ * at +2 becomes 22:00 the previous day — and the answer came back labelled
+ * with a date one behind the times inside it. The interface showed "Sunday 6"
+ * above a list of Monday's appointments, which is somebody arriving on the
+ * wrong day.
+ *
+ * The date components are read in local time, which is what a clinic's day is.
+ */
+function asDay(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 function atTime(date, time) {
   const [hours, minutes] = String(time).split(':').map(Number);
   const made = new Date(date);
@@ -230,6 +248,7 @@ module.exports = {
   freeOnDay,
   freeOnDayFor,
   weekdayIndex,
+  asDay,
   atTime,
   sameDay,
 };

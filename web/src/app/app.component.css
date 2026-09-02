@@ -1,3 +1,15 @@
+/* The header, and why it is built to become two rows rather than one.
+ *
+ * On a phone the single row crammed a mark, a product name, four links, a
+ * centre selector and "Demo Centre Admin" into 360 pixels — and the account
+ * name, the least useful thing on it, took a third. So below 56rem: identity
+ * and the sign-out on the top row, the centre selector full width beneath it,
+ * and the navigation on its own row that scrolls.
+ *
+ * The account name is the first thing to go. Somebody knows who they signed in
+ * as; what they need on a small screen is which centre they are looking at.
+ */
+
 :host {
   display: flex;
   flex-direction: column;
@@ -5,66 +17,104 @@
 }
 
 .top {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 0.85rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
-  flex-wrap: wrap;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  width: min(76rem, 100%);
+  margin: 0 auto;
+  padding: 0.7rem 1.4rem;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  flex: none;
+  text-decoration: none;
+  color: inherit;
 }
 
-.mark {
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 4px;
-  background: var(--accent);
-  box-shadow: inset 0 0 0 3px var(--surface), 0 0 0 1px var(--accent);
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  /* 1.05 stacked the two lines on top of each other: the descenders of
+     "Booking" landed in the centre name below it. Enough room for both, and
+     no more. */
+  line-height: 1.25;
+  gap: 0.05rem;
+}
+
+.wordmark strong {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-size: 1.02rem;
+  line-height: 1.15;
+}
+
+/* The centre, under the product name. This is a multi-tenant platform and
+   which tenant you are in is not a detail — it belongs in the identity. */
+.wordmark span {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 nav {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.15rem;
   margin-right: auto;
 }
 
 nav a {
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 8px;
   color: var(--ink-soft);
   text-decoration: none;
   font-size: 0.92rem;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
 }
 
 nav a:hover { background: var(--hover); color: var(--ink); }
-nav a.here { background: var(--accent-soft); color: var(--accent-ink); font-weight: 550; }
+nav a.here { background: var(--accent-soft); color: var(--accent-ink); font-weight: 560; }
 
 .who {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.8rem;
   font-size: 0.9rem;
+  flex: none;
 }
 
-.centre { display: flex; align-items: center; gap: 0.4rem; }
-.centre .label { color: var(--ink-faint); font-size: 0.8rem; }
-.centre select { min-width: 13rem; }
+.centre { display: flex; align-items: center; gap: 0.45rem; }
 
-.name { color: var(--ink-soft); }
+.centre select {
+  width: auto;
+  min-width: 12rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.88rem;
+  background: var(--raised);
+}
+
+.name {
+  color: var(--ink-soft);
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 main {
   flex: 1;
-  width: min(72rem, 100%);
+  width: min(76rem, 100%);
   margin: 0 auto;
-  padding: 1.75rem 1.5rem 3rem;
+  padding: 1.6rem 1.4rem 3rem;
 }
 
 footer {
@@ -72,13 +122,58 @@ footer {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  padding: 1rem 1.5rem;
+  width: min(76rem, 100%);
+  margin: 0 auto;
+  padding: 1.1rem 1.4rem;
   border-top: 1px solid var(--line);
   color: var(--ink-faint);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
-@media (max-width: 40rem) {
-  .who { width: 100%; justify-content: space-between; }
-  nav { order: 3; width: 100%; overflow-x: auto; }
+@media (prefers-reduced-motion: reduce) {
+  nav a { transition: none; }
+}
+
+/* Below this the single row stops fitting honestly. */
+@media (max-width: 56rem) {
+  .bar {
+    flex-wrap: wrap;
+    gap: 0.7rem 1rem;
+    padding: 0.65rem 1rem;
+  }
+
+  /* The brand takes the rest of the first row so sign-out sits at its right. */
+  .brand { flex: 1; min-width: 0; }
+
+  /* `.who` stops being a box and its children become children of the bar.
+     Without this, `order` on the centre selector only sorts it *within* `.who`
+     — so the whole group wrapped together and sign-out ended up on the left of
+     the second row, ahead of the selector it was meant to follow. */
+  .who { display: contents; }
+
+  .name { display: none; }
+  .who button { white-space: nowrap; order: 2; }
+
+  .centre { order: 3; width: 100%; }
+  .centre select { flex: 1; min-width: 0; }
+
+  nav {
+    order: 4;
+    width: 100%;
+    margin-right: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.1rem;
+  }
+
+  nav::-webkit-scrollbar { display: none; }
+  nav a { padding: 0.45rem 0.7rem; }
+
+  main { padding: 1.2rem 1rem 2.5rem; }
+  footer { padding: 1rem; font-size: 0.76rem; }
+}
+
+@media (max-width: 26rem) {
+  .wordmark strong { font-size: 0.95rem; }
+  .who button { padding: 0.45rem 0.7rem; font-size: 0.88rem; }
 }
