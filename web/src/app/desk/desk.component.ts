@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
@@ -96,7 +96,13 @@ export class DeskComponent {
   readonly problem = signal<string | null>(null);
 
   constructor() {
-    this.load();
+    // The diary follows the centre in the header. See the note in
+    // my-bookings.component.ts: loading once at construction leaves one
+    // centre’s appointments on screen under another centre’s name.
+    effect(() => {
+      this.session.centre();
+      this.load();
+    });
   }
 
   private load(): void {

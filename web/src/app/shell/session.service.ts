@@ -109,6 +109,13 @@ export class SessionService {
     this.platformAdmin.set(false);
     this.done();
     write(TOKEN_KEY, null);
+
+    // The centre goes too. It is a choice the person made, not a setting of
+    // the browser, and leaving it behind means the next person to sign in on
+    // this machine lands in whichever centre the last one was looking at —
+    // which for somebody who works at two of them is a genuinely confusing
+    // start, and for a demonstration looks like the isolation is broken.
+    this.lookAt(null);
   }
 
   /**

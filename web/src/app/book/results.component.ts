@@ -87,7 +87,7 @@ import { clock, dayNumber, dayOfWeek, monthOf, yearOf } from '../shell/dates';
           } @else {
             <div class="days">
               @for (day of found.days; track day.date) {
-                <article class="day">
+                <article class="day" [attr.data-date]="day.date">
                   <div class="when">
                     <p class="dow">{{ dayOfWeek(day.date) }}</p>
                     <p class="num">{{ dayNumber(day.date) }}</p>

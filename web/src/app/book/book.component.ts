@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService, Exam, SearchAnswer, SearchDay, Site } from '../shell/api.service';
@@ -331,6 +331,19 @@ export class BookComponent {
   });
 
   constructor() {
+    // The price list belongs to the centre, so it is re-read when the centre
+    // changes — and everything chosen against the old one is cleared, because
+    // an exam id from another centre is either a different exam or nothing.
+    effect(() => {
+      this.session.centre();
+      this.chosen.set([]);
+      this.answer.set(null);
+      this.showing.set(false);
+      this.load();
+    });
+  }
+
+  private load(): void {
     this.api.exams().subscribe({
       next: (answer) => this.exams.set(answer.exams),
       error: () => this.problem.set('Could not read this centre’s list of exams.'),

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
@@ -78,7 +78,15 @@ export class MyBookingsComponent {
   readonly problem = signal<string | null>(null);
 
   constructor() {
-    this.load();
+    // Reloaded whenever the centre in the header changes, not once at
+    // construction. Without this the list stays as it was: switch centres
+    // and you are looking at the previous one’s bookings under the new
+    // one’s name — which reads as the isolation being broken when it is
+    // the screen that has not caught up.
+    effect(() => {
+      this.session.centre();
+      this.load();
+    });
   }
 
   private load(): void {

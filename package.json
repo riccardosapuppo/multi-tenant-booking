@@ -11,7 +11,8 @@
     "build": "cd web && npm install --no-audit --no-fund && npm run build",
     "test": "cd backend && node --test",
     "walkthrough": "node tools/walkthrough.mjs",
-    "check:mark": "node tools/check-mark.mjs"
+    "check:mark": "node tools/check-mark.mjs",
+    "check:screen": "node tools/through-the-screen.mjs"
   },
   "engines": {
     "node": ">=20.11"

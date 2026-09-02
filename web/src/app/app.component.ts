@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { LogoComponent } from './shell/logo.component';
+import { keepTitle } from './shell/title';
 
 import { ApiService } from './shell/api.service';
 import { SessionService } from './shell/session.service';
@@ -96,6 +97,11 @@ export class AppComponent {
   private readonly router = inject(Router);
 
   readonly centres = computed(() => this.session.grants());
+
+  constructor() {
+    // The tab says which page and which centre, not just the product name.
+    keepTitle();
+  }
 
   switch(event: Event): void {
     const slug = (event.target as HTMLSelectElement).value;
