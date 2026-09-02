@@ -64,7 +64,7 @@ import { clock } from '../shell/dates';
                 <td class="mono">{{ clock(booking.starts_at) }}–{{ clock(booking.ends_at) }}</td>
                 <td>{{ booking.room_name }}</td>
                 <td>{{ booking.patient_name }}</td>
-                <td><span class="tag">{{ booking.category }}</span></td>
+                <td><span class="tag">{{ label(booking.category) }}</span></td>
                 <td class="mono">{{ booking.reference }}</td>
                 <td style="text-align: right">
                   @if (booking.status === 'cancelled') {

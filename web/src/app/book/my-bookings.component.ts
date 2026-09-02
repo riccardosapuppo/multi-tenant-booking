@@ -49,7 +49,7 @@ import { shortWhen } from '../shell/dates';
                   {{ names(booking) }}
                   <div class="muted">{{ booking.site_name }} · {{ booking.room_name }}</div>
                 </td>
-                <td><span class="tag">{{ booking.category }}</span></td>
+                <td><span class="tag">{{ label(booking.category) }}</span></td>
                 <td style="text-align: right">
                   @if (booking.status === 'cancelled') {
                     <span class="tag bad">cancelled</span>
@@ -100,6 +100,13 @@ export class MyBookingsComponent {
       next: () => this.load(),
       error: () => this.problem.set('That could not be cancelled.'),
     });
+  }
+
+  /** The same words the rest of the interface uses. The column was showing
+   * the database value, so a patient read "health_service" under a heading
+   * that said Category. */
+  label(key: string): string {
+    return ({ exempt: 'Exempt', health_service: 'Health service', private: 'Private', insured: 'Insured' })[key] ?? key;
   }
 
   names(booking: Booking): string {
