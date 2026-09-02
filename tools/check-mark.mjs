@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+/**
+ * The mark in the header and the mark in the tab have to be the same mark.
+ *
+ * They live in two files because they have to: the component draws with CSS
+ * custom properties so it can sit on a light or a dark ground, and a favicon is
+ * loaded outside the page and inherits nothing, so its colours are literal.
+ * Two files, one drawing — and "keep them in step by remembering" is not a
+ * plan. Both source files say a test checks this. This is that test.
+ *
+ * It compares the geometry, which is the part that makes it the same mark, and
+ * ignores the colours, which are the part that has to differ.
+ *
+ *     npm run check:mark
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const web = path.join(here, '..', 'web', 'src');
+
+const component = fs.readFileSync(path.join(web, 'app', 'shell', 'logo.component.ts'), 'utf8');
+const favicon = fs.readFileSync(path.join(web, 'favicon.svg'), 'utf8');
+
+/**
+ * Every rect, as the numbers that place it.
+ *
+ * Read with a pattern rather than an XML parser because one of the two files is
+ * an Angular template with attribute bindings in it, and no XML parser is going
+ * to be happy about `[attr.fill]`.
+ */
+function shapes(source) {
+  const found = [];
+
+  for (const match of source.matchAll(/<rect\b([^>]*)>/g)) {
+    const attributes = match[1] ?? '';
+    const number = (name) => {
+      const hit = attributes.match(new RegExp(`\\b${name}="([\\d.]+)"`));
+      return hit ? Number(hit[1]) : null;
+    };
+
+    found.push({
+      x: number('x') ?? 0,
+      y: number('y') ?? 0,
+      width: number('width'),
+      height: number('height'),
+      rx: number('rx'),
+    });
+  }
+
+  return found.sort((a, b) => a.y - b.y || a.x - b.x);
+}
+
+const inComponent = shapes(component);
+const inFavicon = shapes(favicon);
+
+const problems = [];
+
+if (inComponent.length !== inFavicon.length) {
+  problems.push(
+    `the component draws ${inComponent.length} shapes and the favicon ${inFavicon.length}`
+  );
+} else {
+  inComponent.forEach((shape, at) => {
+    const other = inFavicon[at];
+    for (const key of ['x', 'y', 'width', 'height', 'rx']) {
+      if (shape[key] !== other[key]) {
+        problems.push(
+          `shape ${at + 1}: ${key} is ${shape[key]} in the component and ${other[key]} in the favicon`
+        );
+      }
+    }
+  });
+}
+
+// The one colour they must agree on: the ground, which is also the theme colour
+// in index.html — a tab strip in one green and an icon in another is worse than
+// no theme colour at all.
+const ground = component.match(/--mark-ground:\s*(#[0-9a-f]{6})/i)?.[1];
+const groundInStyles = fs
+  .readFileSync(path.join(web, 'styles.css'), 'utf8')
+  .match(/--mark-ground:\s*(#[0-9a-f]{6})/i)?.[1];
+const groundInFavicon = favicon.match(/<rect[^>]*rx="7"[^>]*fill="(#[0-9a-f]{6})"/i)?.[1];
+const themeColour = fs
+  .readFileSync(path.join(web, 'index.html'), 'utf8')
+  .match(/name="theme-color"\s+content="(#[0-9a-f]{6})"/i)?.[1];
+
+const grounds = [groundInStyles, groundInFavicon, themeColour].filter(Boolean);
+if (new Set(grounds.map((one) => one.toLowerCase())).size > 1) {
+  problems.push(
+    `the ground is ${groundInStyles} in styles.css, ${groundInFavicon} in the favicon and ${themeColour} as the theme colour`
+  );
+}
+
+if (problems.length > 0) {
+  console.error('The header mark and the tab icon have drifted apart:\n');
+  for (const problem of problems) console.error(`  ${problem}`);
+  console.error('\nBoth are drawn in web/src/app/shell/logo.component.ts and web/src/favicon.svg.');
+  process.exit(1);
+}
+
+console.log(`The mark matches: ${inComponent.length} shapes, and one ground colour throughout.`);

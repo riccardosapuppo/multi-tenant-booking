@@ -72,11 +72,23 @@ because it changes which times exist.
 
 ![The booking panels: site, two exams chosen with Add another exam, payment category, preferred day and time of day](docs/booking-panels.png)
 
-The answer is **days**, not slots. A card per day with the date large, the
-total price for everything asked for, and the times beside it. Nobody books a
-room; they book a morning.
+The answer opens over the question that asked for it, and it is **days** rather
+than slots: a card per day with the date large, the total price for everything
+asked for, the site, and the times beside it. Each day also carries a bar
+showing how much choice it offers next to the others — with eight days on
+screen the useful question is not "is this one free" but "which of these leaves
+me room to change my mind".
 
-![Search results: a day card with the date, the total price, the modality and site, and the available times beside it](docs/booking.png)
+![The results dialog: day cards with the date, price, site and available times](docs/booking.png)
+
+And on a phone, where the header becomes two rows and drops the account name —
+somebody knows who they signed in as; what they need is which centre they are
+looking at.
+
+<p>
+  <img src="docs/phone-book.png" alt="The booking panels on a phone" width="290" />
+  <img src="docs/phone-results.png" alt="The results dialog on a phone" width="290" />
+</p>
 
 The desk, which is behind a role at that centre. The totals along the top are
 per payment category, because that is what the quotas are counted in:
@@ -153,6 +165,7 @@ paragraph about it.
 ```
 npm test                     # the rules, and the isolation, if a database is there
 npm run walkthrough          # drives the running platform over HTTP
+npm run check:mark           # the header mark and the tab icon are one drawing
 ```
 
 The suite covers the rules — quotas, slot cutting, weekday patterns — and,

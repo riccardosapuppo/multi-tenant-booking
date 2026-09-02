@@ -50,6 +50,11 @@ jobs:
         run: npm test 2>&1 | tee out.txt
         working-directory: backend
 
+      # The header mark and the tab icon are two files by necessity and one
+      # drawing by intent. Checked rather than remembered.
+      - name: The mark and the favicon are the same mark
+        run: node tools/check-mark.mjs
+
       # Skipped and passed look the same from a green tick. Checked rather than
       # trusted, because the whole point of running a database here is that
       # these particular tests do not skip.
