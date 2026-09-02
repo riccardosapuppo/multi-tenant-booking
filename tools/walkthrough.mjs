@@ -101,8 +101,25 @@ async function main() {
   const health = await waitForApi();
   console.log(`The platform has ${health.centres} centres.\n`);
 
+  // ------------------------------------------------------------- the front door
+  console.log('Somebody typed the API port into a browser');
+
+  const front = await call('/');
+  expect(
+    'the root says what this is and where the interface is',
+    front.status === 200 && typeof front.body?.the_interface_is_at === 'string',
+    `got ${front.status} — this used to be a bare "no such endpoint", which reads like a fault`
+  );
+
+  const missing = await call('/nothing-here');
+  expect(
+    'and a wrong path says where the API starts',
+    missing.status === 404 && missing.body?.the_api_starts_at === '/api',
+    `got ${missing.status}`
+  );
+
   // ---------------------------------------------------------------- resolving
-  console.log('Which centre is this request for');
+  console.log('\nWhich centre is this request for');
 
   const unknown = await call('/api/centre/exams', { centre: 'nowhere-at-all' });
   expect('an unknown centre is 404', unknown.status === 404, `got ${unknown.status}`);

@@ -34,6 +34,32 @@ function build() {
   api.disable('x-powered-by');
   api.use(express.json({ limit: '100kb' }));
 
+  /**
+   * The front door, for somebody who typed the API's port into a browser.
+   *
+   * That is not a mistake worth punishing: the README gives curl examples
+   * against this port, and going to look at it is the obvious next thing. It
+   * used to answer `{"error":"no such endpoint"}`, which is true, unhelpful,
+   * and reads like something is broken.
+   *
+   * So it says what this is, where the interface is, and one call that works —
+   * because the useful thing to know at that moment is that you are one port
+   * away from the thing you wanted.
+   */
+  api.get('/', (req, res) => {
+    res.json({
+      this_is: 'the booking API',
+      the_interface_is_at: `http://localhost:${process.env.WEB_PORT || 4200}`,
+      health: '/api/health',
+      try: {
+        'a centre’s price list': "curl -H 'X-Centre: northgate' <this>/api/centre/exams",
+        'the same, by query': '<this>/api/centre/exams?centre=riverside',
+        'a suspended centre': "curl -H 'X-Centre: lakeside' <this>/api/centre/exams",
+      },
+      note: 'Every call below /api/centre needs to know which centre it is for.',
+    });
+  });
+
   api.get('/api/health', async (req, res) => {
     try {
       const { rows } = await sharedPool().query('SELECT count(*)::int AS centres FROM centres');
@@ -58,7 +84,17 @@ function build() {
 
   api.use('/api/centre', withinCentre);
 
-  api.use((req, res) => res.status(404).json({ error: 'no such endpoint' }));
+  // A 404 that says where to look. The path is echoed back because the common
+  // reason for landing here is a missing /api prefix or the interface's own
+  // port, and seeing what the server actually received settles both.
+  api.use((req, res) => {
+    res.status(404).json({
+      error: 'no such endpoint',
+      you_asked_for: `${req.method} ${req.originalUrl}`,
+      the_api_starts_at: '/api',
+      the_interface_is_at: `http://localhost:${process.env.WEB_PORT || 4200}`,
+    });
+  });
 
   // Last, and with four arguments, or Express treats it as a handler. Every
   // unexpected error becomes one line out and one shape in: a stack trace in a

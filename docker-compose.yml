@@ -35,6 +35,9 @@ services:
       # written down in booking/availability.js: the demonstration computes in
       # the process's zone, which is right while every centre is in it.
       TZ: ${TZ:-Europe/Rome}
+      # Only so the API can tell somebody who typed its port into a browser
+      # where the interface actually is. It never calls it.
+      WEB_PORT: ${WEB_PORT:-4200}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: booking
