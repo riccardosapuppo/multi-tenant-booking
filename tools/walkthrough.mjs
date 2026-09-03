@@ -248,15 +248,38 @@ async function main() {
   expect('the exam has a room', rooms.status === 200 && rooms.body.rooms.length > 0);
   const room = rooms.body.rooms[0];
 
-  const day = new Date();
-  day.setDate(day.getDate() + 7);
-  const when = day.toISOString().slice(0, 10);
+  /**
+   * The day is asked for, not invented.
+   *
+   * This used to be today plus seven — which is always the SAME WEEKDAY as
+   * today. So on a Saturday it asked a centre that opens Monday to Friday for
+   * times on a Saturday, correctly got none, and reported that the booking
+   * system was broken: red two days in seven, for a reason nobody would connect
+   * to this line, on a check that had passed every weekday for a fortnight.
+   *
+   * `POST /api/centre/search` already scans forward and skips days with no
+   * session. Asking it which day it can offer is both the honest question and
+   * the one a person actually asks.
+   */
+  const offered = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: [northKnee.id], category: 'private' },
+  });
+
+  expect(
+    'the centre offers a day it can really do',
+    offered.status === 200 && (offered.body.days?.length ?? 0) > 0,
+    `got ${offered.status}: ${JSON.stringify(offered.body).slice(0, 160)}`
+  );
+
+  const when = offered.body.days[0].date;
 
   const free = await call(
     `/api/centre/availability?room=${room.id}&exam=${northKnee.id}&category=private&day=${when}`,
     { centre: 'northgate' }
   );
-  expect('there are times free', free.status === 200 && free.body.times.length > 0, `got ${free.status}`);
+  expect('there are times free', free.status === 200 && free.body.times.length > 0, `on ${when}, got ${free.status}`);
 
   const booked = await call('/api/centre/bookings', {
     method: 'POST',

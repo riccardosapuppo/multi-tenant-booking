@@ -5,6 +5,11 @@ jobs:
   api:
     name: API, and that one centre cannot see another
     runs-on: ubuntu-latest
+    # A job that hangs is worse than one that fails: it stays amber for six
+    # hours and nobody looks at it, while a red one sends an email. Learned
+    # from a Windows job that sat in_progress for two hours after every one
+    # of its checks had passed.
+    timeout-minutes: 20
 
     # A real PostgreSQL, so the isolation tests are never the ones that get
     # skipped. They skip locally when there is no database — a red suite that
@@ -71,6 +76,11 @@ jobs:
   stack:
     name: The whole thing starts from nothing
     runs-on: ubuntu-latest
+    # A job that hangs is worse than one that fails: it stays amber for six
+    # hours and nobody looks at it, while a red one sends an email. Learned
+    # from a Windows job that sat in_progress for two hours after every one
+    # of its checks had passed.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
