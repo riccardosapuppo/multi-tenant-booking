@@ -44,6 +44,12 @@ API_PORT=3001 WEB_PORT=4300 docker compose up --build
 
 `docker compose down` stops it and takes the data with it.
 
+**To put the machine back completely:** `docker compose down -v` removes the
+volumes too, and `docker image rm multi-tenant-booking-api multi-tenant-booking-web
+postgres:16-alpine` removes what was built and pulled — together about 700 MB,
+and the part that deleting the clone does not reach. Nothing is installed
+globally; the three images and one volume are the whole footprint.
+
 ## Signing in
 
 Four accounts. They are on the sign-in page as buttons, so you can move
@@ -213,9 +219,12 @@ npm run check:serving        # nothing here can hand somebody yesterday's build
 npm run check:mark           # the header mark and the tab icon are one drawing
 ```
 
-The three `check:` scripts that drive a browser want `playwright-core` on the
-path; they say so and stop rather than pretending to have passed. They are
-checks, not dependencies, so they are not in `package.json`.
+**Two** of those scripts drive a browser — `check:screen` and `check:roles` —
+and they want `playwright-core` on the path; they say so and stop rather than
+pretending to have passed. `check:serving` and `check:mark` do not: one reads
+response headers and the other compares two drawings, and neither needs a
+browser for that. All four are checks rather than dependencies, so none of them
+is in `package.json`.
 
 The suite covers the rules — quotas, slot cutting, weekday patterns — and,
 when PostgreSQL is reachable, creates two centres of its own to check that

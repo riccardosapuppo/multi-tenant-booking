@@ -42,7 +42,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # The exact floor `engines` declares, not "the newest 20.x". A minimum
+          # version nothing ever runs on is a claim, and this is the one job
+          # that could turn it into a fact.
+          node-version: "20.11"
 
       - name: Install
         run: npm install --no-audit --no-fund

@@ -90,6 +90,10 @@ try {
     ['/ngsw-worker.js', 'the old service worker itself'],
     ['/chunk-THIS-WAS-NEVER-BUILT.js', 'a script from a build that no longer exists'],
     ['/assets/nothing-here.woff2', 'a font that was renamed'],
+    // The one this list did not have, and the one that was therefore wrong:
+    // every other extension fell through to =404 while a named `.html` still
+    // reached the single-page fallback and came back as the application at 200.
+    ['/old-landing.html', 'a page from a version of the site that is gone'],
   ]) {
     const [where, what] = missing;
     const answer = await head(where);
