@@ -10,9 +10,11 @@
  * them, and drop them again — so they can run against the same PostgreSQL the
  * demonstration uses without touching the demonstration's data.
  *
- * With no database they are skipped rather than failed. A red suite that means
- * "you did not start Docker" trains people to ignore red suites; CI provides
- * one, so there it is never skipped.
+ * With no database they are skipped rather than failed, and a clone where
+ * nothing has been installed yet counts as having no database: the driver is
+ * as absent as the server. A red suite that means "you did not start Docker"
+ * trains people to ignore red suites; CI provides one, so there it is never
+ * skipped.
  */
 
 'use strict';
@@ -20,15 +22,49 @@
 const { strict: assert } = require('node:assert');
 const { describe, it, before, after } = require('node:test');
 
-const { sharedPool, tenantPool, maintenancePool, closeAll } = require('../db/pools');
-const provision = require('../tenants/provision');
-const registry = require('../tenants/registry');
-const store = require('../booking/store');
+/**
+ * Asked before anything under `db/` is required.
+ *
+ * All four modules below reach PostgreSQL through `pg`, so on a clone where
+ * nothing has been installed the require throws while this file is still being
+ * read — before a single test exists to be skipped, which turns the missing
+ * database into the red suite the skipping is here to prevent. `npm test` is
+ * the first thing the README asks anybody to run, and it is run on a clone.
+ */
+function driverInstalled() {
+  try {
+    require.resolve('pg');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+let sharedPool;
+let tenantPool;
+let maintenancePool;
+let closeAll;
+let provision;
+let registry;
+let store;
+
+/**
+ * What is missing, or null while nothing is: set here when the driver is not
+ * on disk, in `before` when nothing answers on the port. Every test skips with
+ * it as the reason, so the output names which of the two it was rather than
+ * leaving somebody to work it out.
+ */
+let absent = driverInstalled() ? null : 'no pg driver: npm install in backend';
+
+if (!absent) {
+  ({ sharedPool, tenantPool, maintenancePool, closeAll } = require('../db/pools'));
+  provision = require('../tenants/provision');
+  registry = require('../tenants/registry');
+  store = require('../booking/store');
+}
 
 const ALPHA = 'test-alpha-iso';
 const BETA = 'test-beta-iso';
-
-let available = false;
 
 async function reachable() {
   const admin = maintenancePool();
@@ -81,8 +117,8 @@ describe('one centre cannot see another', { skip: false }, () => {
   let inBeta;
 
   before(async () => {
-    available = await reachable();
-    if (!available) return;
+    if (!absent && !(await reachable())) absent = 'no PostgreSQL';
+    if (absent) return;
 
     await ensureRegistry();
 
@@ -99,7 +135,7 @@ describe('one centre cannot see another', { skip: false }, () => {
   });
 
   after(async () => {
-    if (!available) return;
+    if (absent) return;
     for (const slug of [ALPHA, BETA]) {
       await provision.remove({ slug }).catch(() => {});
     }
@@ -107,7 +143,7 @@ describe('one centre cannot see another', { skip: false }, () => {
   });
 
   it('has a database of its own for each', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     const { rows } = await maintenancePool().query(
       "SELECT datname FROM pg_database WHERE datname LIKE 'centre_test_%_iso'"
@@ -116,7 +152,7 @@ describe('one centre cannot see another', { skip: false }, () => {
   });
 
   it('keeps each centre’s exams to itself', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     const alphaExams = await store.exams(alpha);
     const betaExams = await store.exams(beta);
@@ -126,7 +162,7 @@ describe('one centre cannot see another', { skip: false }, () => {
   });
 
   it('keeps bookings apart even when the ids are the same', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     // Both centres number their rooms and exams from 1. If isolation were a
     // WHERE clause somebody could forget, this is where it would show.
@@ -149,7 +185,7 @@ describe('one centre cannot see another', { skip: false }, () => {
   });
 
   it('refuses the same room and time twice', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     const when = new Date();
     when.setDate(when.getDate() + 2);
@@ -171,7 +207,7 @@ describe('one centre cannot see another', { skip: false }, () => {
   });
 
   it('carries its own options in the register', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     const a = await registry.bySlug(ALPHA);
     const b = await registry.bySlug(BETA);
@@ -195,21 +231,21 @@ describe('creating a centre', () => {
   const TAKEN = 'test-taken-iso';
 
   before(async () => {
-    available = await reachable();
-    if (!available) return;
+    if (!absent && !(await reachable())) absent = 'no PostgreSQL';
+    if (absent) return;
     await ensureRegistry();
     await provision.remove({ slug: TAKEN }).catch(() => {});
     await provision.create({ slug: TAKEN, name: 'Taken' });
   });
 
   after(async () => {
-    if (!available) return;
+    if (absent) return;
     await provision.remove({ slug: TAKEN }).catch(() => {});
     await closeAll();
   });
 
   it('refuses a name that is already taken', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     await assert.rejects(
       () => provision.create({ slug: TAKEN, name: 'Taken again' }),
@@ -218,7 +254,7 @@ describe('creating a centre', () => {
   });
 
   it('leaves nothing behind when it fails', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     // A slug that passes validation but whose register insert will fail,
     // because the name is empty — checked before anything is created, so
@@ -232,7 +268,7 @@ describe('creating a centre', () => {
   });
 
   it('refuses a slug that is not a slug', async (t) => {
-    if (!available) return t.skip('no PostgreSQL');
+    if (absent) return t.skip(absent);
 
     for (const bad of ['Has Capitals', 'has_underscores', 'a', '-leading', 'trailing-', 'x"; DROP']) {
       await assert.rejects(() => provision.create({ slug: bad, name: 'No' }), `accepted "${bad}"`);

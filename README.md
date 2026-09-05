@@ -228,8 +228,11 @@ is in `package.json`.
 
 The suite covers the rules — quotas, slot cutting, weekday patterns — and,
 when PostgreSQL is reachable, creates two centres of its own to check that
-neither can see the other. With no database those skip rather than fail; CI
-provides one, and then checks that nothing skipped.
+neither can see the other. With no database those skip rather than fail, and a
+fresh clone counts as having no database — the driver is missing along with the
+server — so `npm test` is green there too, with the isolation checks skipped
+and saying which of the two was absent. CI provides one, and then checks that
+nothing skipped.
 
 `npm run walkthrough` is the check that is **not** written behind the same door
 as the code. The suite calls the functions directly and was written alongside
