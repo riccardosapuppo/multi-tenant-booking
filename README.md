@@ -2,13 +2,11 @@
 
 A booking platform for a group of diagnostic centres. Patients book online,
 the desk works the day's diary, and whoever runs the platform brings a new
-centre into existence from a console — while the others carry on taking
-bookings.
+centre into existence from a console, while the others keep taking bookings.
 
-The interesting part is the last one. Routing three centres that already exist
-is a middleware; **creating the fourth, at runtime, with its own database, is
-where a multi-tenant system is actually decided** — and it is what this
-demonstrates.
+The interesting part is the last one, and what this demonstrates. Routing three
+centres that already exist is a middleware; **creating the fourth, at runtime,
+with its own database, is where a multi-tenant system is actually decided**.
 
 ![The platform console: three centres, their per-centre options, and the form that creates a fourth](docs/centres.png)
 
@@ -35,8 +33,8 @@ docker compose up --build
 Then open **http://localhost:4200**. The first start creates the register,
 three centres, and the accounts below.
 
-If port 3000 or 4200 is already taken — 3000 is the port every other
-development server also wants — set your own:
+If port 3000 or 4200 is already taken (3000 is what every other development
+server also wants), set your own:
 
 ```
 API_PORT=3001 WEB_PORT=4300 docker compose up --build
@@ -46,7 +44,7 @@ API_PORT=3001 WEB_PORT=4300 docker compose up --build
 
 **To put the machine back completely:** `docker compose down -v` removes the
 volumes too, and `docker image rm multi-tenant-booking-api multi-tenant-booking-web
-postgres:16-alpine` removes what was built and pulled — together about 700 MB,
+postgres:16-alpine` removes what was built and pulled, together about 700 MB
 and the part that deleting the clone does not reach. Nothing is installed
 globally; the three images and one volume are the whole footprint.
 
@@ -71,7 +69,7 @@ API returns 403.
 
 Every claim in that table is checked by `npm run check:roles`, which drives
 each account through what it is promised **and** through what it is promised it
-cannot do. One of those rows used to be false — see *Checking it*.
+cannot do. One of those rows used to be false; see *Checking it*.
 
 ### Four accounts, four applications
 
@@ -96,8 +94,8 @@ under the mark says **no centre**.
 ## What it looks like
 
 Booking, in the shape the original asked the question: panels that open one at
-a time, each showing its answer once closed. Several exams go into one visit —
-"Add another exam" — and the payment category is asked *before* the times,
+a time, each showing its answer once closed. Several exams go into one visit
+("Add another exam"), and the payment category is asked *before* the times,
 because it changes which times exist.
 
 ![The booking panels: site, two exams chosen with Add another exam, payment category, preferred day and time of day](docs/booking-panels.png)
@@ -105,13 +103,13 @@ because it changes which times exist.
 The answer opens over the question that asked for it, and it is **days** rather
 than slots: a card per day with the date large, the total price for everything
 asked for, the site, and the times beside it. Each day also carries a bar
-showing how much choice it offers next to the others — with eight days on
+showing how much choice it offers next to the others: with eight days on
 screen the useful question is not "is this one free" but "which of these leaves
 me room to change my mind".
 
 ![The results dialog: day cards with the date, price, site and available times](docs/booking.png)
 
-And on a phone, where the header becomes two rows and drops the account name —
+And on a phone, where the header becomes two rows and drops the account name:
 somebody knows who they signed in as; what they need is which centre they are
 looking at.
 
@@ -125,8 +123,8 @@ per payment category, because that is what the quotas are counted in:
 
 ![The desk: a day's appointments with times, rooms, patients, categories and references](docs/desk.png)
 
-And the price list, which **only** the centre's own administrator can open —
-staff at the same centre read the desk and are sent back to it. None of the
+And the price list, which **only** the centre's own administrator can open.
+Staff at the same centre read the desk and are sent back to it. None of the
 three columns is just a number: minutes is how long a slot is, so changing it
 re-cuts every day on the booking screen; *offered online* takes an exam off
 what patients are shown and leaves it here; and the price is what somebody is
@@ -138,11 +136,11 @@ quoted before they choose a time.
 
 1. **Sign in as the patient** and book something at Northgate. Then switch
    centre in the header and look at *My bookings*: it is empty. Nothing was
-   filtered out — the booking is in another database and was never fetched.
+   filtered out: the booking is in another database and was never fetched.
 2. **Sign in as staff.** The *Desk* link appears. Switch to Lakeside and it
    goes: the same account, the same token, a different centre.
 3. **Book as an exempt patient at Riverside.** Its morning allows one, so the
-   second attempt says the quota for that category is used up — and offers the
+   second attempt says the quota for that category is used up, and offers the
    same morning to a private patient. Quotas per payment category are what the
    people at the desk actually manage, and most demonstrations model them away.
 4. **Sign in as the platform administrator and create a centre.** It gets a
@@ -182,9 +180,9 @@ naming one centre and a hostname naming another is a misconfiguration or an
 attempt, and picking one silently is how a booking lands in the wrong centre's
 database.
 
-A suspended centre answers 403 and an unknown one 404 — different answers on
-purpose, since a platform that returns the same for both lets anybody
-enumerate its centres.
+A suspended centre answers 403 and an unknown one 404, different on purpose,
+since a platform that returns the same for both lets anybody enumerate its
+centres.
 
 ## One application, four jobs
 
@@ -200,11 +198,11 @@ Watch the *Desk* link appear and disappear as you switch centres: that is what
 paragraph about it.
 
 Putting them in one application only shows that, though, if signing in as
-somebody else visibly changes the application — and at first it did not.
+somebody else visibly changes the application; at first it did not.
 Everybody got the same two links plus perhaps a third, the role was a word
 inside the centre selector, and signing out and back in as an administrator
 looked identical. So three things move together with the role now: the colour
-the header wears, the set of links (not the same links with some hidden — a
+the header wears, the set of links (not the same links with some hidden: a
 patient has *My bookings*, staff *book for a patient*), and where signing in
 puts you, because staff do not open this to book themselves an appointment.
 
@@ -219,18 +217,18 @@ npm run check:serving        # nothing here can hand somebody yesterday's build
 npm run check:mark           # the header mark and the tab icon are one drawing
 ```
 
-**Two** of those scripts drive a browser — `check:screen` and `check:roles` —
-and they want `playwright-core` on the path; they say so and stop rather than
-pretending to have passed. `check:serving` and `check:mark` do not: one reads
-response headers and the other compares two drawings, and neither needs a
-browser for that. All four are checks rather than dependencies, so none of them
-is in `package.json`.
+**Two** of those scripts, `check:screen` and `check:roles`, drive a browser and
+want `playwright-core` on the path; they say so and stop rather than pretending
+to have passed. `check:serving` and `check:mark` do not: one reads response
+headers and the other compares two drawings, and neither needs a browser for
+that. All four are checks rather than dependencies, so none of them is in
+`package.json`.
 
-The suite covers the rules — quotas, slot cutting, weekday patterns — and,
-when PostgreSQL is reachable, creates two centres of its own to check that
-neither can see the other. With no database those skip rather than fail, and a
-fresh clone counts as having no database — the driver is missing along with the
-server — so `npm test` is green there too, with the isolation checks skipped
+The suite covers the rules (quotas, slot cutting, weekday patterns) and, when
+PostgreSQL is reachable, creates two centres of its own to check that neither
+can see the other. With no database those skip rather than fail, and a fresh
+clone counts as having no database (the driver is missing along with the
+server), so `npm test` is green there too, with the isolation checks skipped
 and saying which of the two was absent. CI provides one, and then checks that
 nothing skipped.
 
@@ -258,7 +256,7 @@ has caught something the others could not.
 `npm run check:screen` drives the whole journey with a browser: a patient books
 and reads the reference off the screen, signs out, and staff sign in and find
 that appointment on the desk with the right name, time, room and category.
-Everything it does the walkthrough already does over HTTP — and that is a
+Everything it does the walkthrough already does over HTTP, and that is a
 different claim. The API behaving is not somebody being able to do it. It found
 three screens that did not reload when the centre was switched, so one centre's
 appointments sat under another centre's name, and a centre that survived
@@ -267,14 +265,13 @@ signing out.
 `npm run check:roles` takes the table under *Signing in* and treats it as a
 promise. It found the row that was false: it said the centre's administrator
 "may change its price list", and `PATCH /desk/exams/:id` existed, was guarded
-correctly and had a passing test — with no screen anywhere that called it. True
-of the system, false of the interface, which is the only place a person can
-act.
+correctly and had a passing test, but no screen anywhere called it. True of the
+system, false of the interface, which is the only place a person can act.
 
 `npm run check:serving` is about what a browser is handed. An earlier version
 of this project installed a service worker; a service worker outlives the build
 that registered it, is reached before the network, and keeps serving its own
-precached copy — so opening the site returned a page from weeks ago and only
+precached copy, so opening the site returned a page from weeks ago and only
 Ctrl+F5 got past it. The way a browser gives up on one is by re-fetching its
 files and finding them gone, and `try_files $uri $uri/ /index.html` answered
 `/ngsw.json` with 200 and a page of HTML. **A request that names a file and
@@ -297,7 +294,7 @@ tools/          the walkthrough
 
 ## What this is not
 
-The demonstration data is invented — every centre, patient, price and opening
+The demonstration data is invented: every centre, patient, price and opening
 hour. There is no payment, no email, no calendar file, and no integration with
 a practice management system; the original had all of those and they are the
 parts that cannot run on somebody else's machine.
