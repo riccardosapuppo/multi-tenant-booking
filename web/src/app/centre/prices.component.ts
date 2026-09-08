@@ -37,7 +37,7 @@ import { SessionService } from '../shell/session.service';
     <p class="lede">
       <strong>{{ session.centre() }}</strong>’s own list. You are the
       <span class="tag ok">centre administrator</span> here, which is what this
-      screen needs — staff at the same centre can read the desk and cannot open it.
+      screen needs: staff at the same centre read the desk but cannot open it.
     </p>
 
     @if (problem(); as message) {
@@ -97,7 +97,7 @@ import { SessionService } from '../shell/session.service';
                       [checked]="row.bookable"
                       (change)="edit(row, 'bookable', $event)"
                     />
-                    <span>{{ row.bookable ? 'Yes' : 'No — desk only' }}</span>
+                    <span>{{ row.bookable ? 'Yes' : 'No, desk only' }}</span>
                   </label>
                 </td>
 

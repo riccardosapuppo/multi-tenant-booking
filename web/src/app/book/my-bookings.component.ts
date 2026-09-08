@@ -18,8 +18,8 @@ import { shortWhen } from '../shell/dates';
   template: `
     <h1>My bookings</h1>
     <p class="lede">
-      At <strong>{{ session.centre() }}</strong>. Switch centres in the header and this
-      list changes with it — a booking made at one centre is not in the other's database.
+      At <strong>{{ session.centre() }}</strong>. Switch centres in the header and the
+      list changes: a booking made at one centre is not in the other's database.
     </p>
 
     @if (loading()) {

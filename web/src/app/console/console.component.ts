@@ -22,15 +22,15 @@ import { ApiService, Centre } from '../shell/api.service';
   template: `
     <h1>Centres</h1>
     <p class="lede">
-      Every centre on the platform. Each has a database of its own — creating one here
-      makes it, and it starts answering straight away.
+      Every centre on the platform, each with a database of its own. Creating one
+      here makes it, and it starts answering straight away.
     </p>
 
     <div class="card" style="margin-bottom: 1.25rem">
       <h2>Add a centre</h2>
       <div class="grid-2">
         <label class="field">
-          <span>Slug — lowercase, used in the subdomain and in the database name</span>
+          <span>Slug: lowercase, used in the subdomain and the database name</span>
           <input [(ngModel)]="slug" name="slug" placeholder="eastgate" />
         </label>
         <label class="field">
@@ -50,7 +50,7 @@ import { ApiService, Centre } from '../shell/api.service';
       @if (made()) {
         <p class="note" style="margin-top: 0.9rem">
           <strong>{{ made() }}</strong> exists, has a database of its own, and is
-          answering — with no restart.
+          answering, with no restart.
         </p>
       }
     </div>

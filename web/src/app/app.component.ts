@@ -112,10 +112,19 @@ import { SessionService } from './shell/session.service';
 
       <footer>
         <span>
-          A demonstration — an independent reconstruction of a production system I
-          designed and developed. Every centre, patient and price in it is invented.
+          A demonstration. It reconstructs a production system I designed and
+          developed; the original cannot be published, so this one was written
+          from scratch. Every centre, patient and price in it is invented.
         </span>
-        <span>Developed by Riccardo Sapuppo</span>
+        <span>
+          Developed by
+          <a
+            href="https://github.com/riccardosapuppo"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Riccardo Sapuppo</a
+          >
+        </span>
       </footer>
     </div>
   `,

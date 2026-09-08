@@ -222,8 +222,26 @@ footer {
   font-size: 0.8rem;
 }
 
+/* The single link down here, and it has to read as one at 0.8rem without
+   turning into the loudest thing on the page. The navigation above underlines
+   nothing, so this takes a rule thin enough to be a hint rather than a colour
+   of its own; hover brings the product's green and the full underline. The
+   focus ring is the global one every control on the page uses. */
+footer a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 0.18em;
+  transition: color 120ms ease, text-decoration-color 120ms ease;
+}
+
+footer a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  nav a { transition: none; }
+  nav a, footer a { transition: none; }
 }
 
 /* Below this the single row stops fitting honestly. */

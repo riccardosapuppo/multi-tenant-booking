@@ -24,8 +24,8 @@ import { SessionService } from '../shell/session.service';
   template: `
     <h1>Sign in</h1>
     <p class="lede">
-      One account, every centre. What you may do is decided per centre — which is
-      what the four accounts below are for.
+      One account, every centre. What you may do is decided per centre, and the
+      four accounts below show it.
     </p>
 
     <div class="grid-2">
@@ -101,7 +101,7 @@ export class SignInComponent {
       what: 'Staff',
       email: 'staff@example.invalid',
       password: 'staff-demo-1234',
-      sees: 'The desk at Northgate and Riverside — and nothing at Lakeside',
+      sees: 'The desk at Northgate and Riverside, nothing at Lakeside',
     },
     {
       what: 'Centre administrator',
