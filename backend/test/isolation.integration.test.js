@@ -56,6 +56,25 @@ let store;
  */
 let absent = driverInstalled() ? null : 'no pg driver: npm install in backend';
 
+/**
+ * Says out loud that these did not run.
+ *
+ * A skipped test reports `ok ... # SKIP` and the summary says "pass 20, fail
+ * 0, skipped 8". Read quickly - and the summary is what gets read - that is a
+ * green run, and these eight are the ones that prove the whole claim of the
+ * project. They are worth a line that cannot be mistaken for a pass.
+ */
+let announced = false;
+function announce() {
+  if (announced) return;
+  announced = true;
+  console.error('');
+  console.error('  !! The isolation tests did NOT run: ' + absent);
+  console.error('     They are the ones that prove one centre cannot see another.');
+  console.error('     Start the database first:  npm start   (or: docker compose up -d postgres)');
+  console.error('');
+}
+
 if (!absent) {
   ({ sharedPool, tenantPool, maintenancePool, closeAll } = require('../db/pools'));
   provision = require('../tenants/provision');
@@ -118,7 +137,10 @@ describe('one centre cannot see another', { skip: false }, () => {
 
   before(async () => {
     if (!absent && !(await reachable())) absent = 'no PostgreSQL';
-    if (absent) return;
+    if (absent) {
+      announce();
+      return;
+    }
 
     await ensureRegistry();
 
@@ -232,7 +254,10 @@ describe('creating a centre', () => {
 
   before(async () => {
     if (!absent && !(await reachable())) absent = 'no PostgreSQL';
-    if (absent) return;
+    if (absent) {
+      announce();
+      return;
+    }
     await ensureRegistry();
     await provision.remove({ slug: TAKEN }).catch(() => {});
     await provision.create({ slug: TAKEN, name: 'Taken' });

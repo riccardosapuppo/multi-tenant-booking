@@ -19,6 +19,19 @@ services:
       interval: 2s
       timeout: 5s
       retries: 30
+    ports:
+      # Published so that `npm test` can reach it, which is the only reason.
+      #
+      # Without this the eight tests that prove one centre cannot see another -
+      # the claim this project exists to make - skipped on every machine, with
+      # the reason "no PostgreSQL", and the run still ended green: twenty
+      # passed, none failed, eight quietly not run. They ran in CI, which
+      # brings its own database, and nowhere else.
+      #
+      # Overridable like the other two, and for the same reason: 5432 is what a
+      # PostgreSQL installed on the machine already holds.
+      #   POSTGRES_PORT=55432 npm start   (and npm test reads the same variable)
+      - "${POSTGRES_PORT:-5432}:5432"
 
   api:
     build:

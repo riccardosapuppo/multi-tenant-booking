@@ -218,7 +218,7 @@ puts you, because staff do not open this to book themselves an appointment.
 ## Checking it
 
 ```
-npm test                     # the rules, and the isolation, if a database is there
+npm test                     # the rules, and the isolation once the database is up
 npm run walkthrough          # drives the running platform over HTTP
 npm run check:screen         # drives the whole journey through a browser
 npm run check:roles          # every account against every claim made about it
@@ -233,13 +233,20 @@ headers and the other compares two drawings, and neither needs a browser for
 that. All four are checks rather than dependencies, so none of them is in
 `package.json`.
 
-The suite covers the rules (quotas, slot cutting, weekday patterns) and, when
-PostgreSQL is reachable, creates two centres of its own to check that neither
-can see the other. With no database those skip rather than fail, and a fresh
-clone counts as having no database (the driver is missing along with the
-server), so `npm test` is green there too, with the isolation checks skipped
-and saying which of the two was absent. CI provides one, and then checks that
-nothing skipped.
+The suite covers the rules (quotas, slot cutting, weekday patterns) and creates
+two centres of its own to check that neither can see the other. Those eight
+need PostgreSQL, so run `npm start` first — or `docker compose up -d postgres`,
+which is enough on its own. They use slugs of their own and remove only those,
+so they can run against a demonstration you are in the middle of looking at.
+
+Until recently they could not run here at all: the compose file kept PostgreSQL
+to itself, nothing on the machine could reach it, and the eight skipped on
+every clone. That is worth saying because of how it looked — `ok ... # SKIP`,
+then "20 passed, 0 failed" — which reads as a green suite covering the claim
+this project exists to make, while the part that covers it had not run. The
+port is published now, and when they still cannot run they say so in three
+lines nobody can mistake for a pass. CI brings its own database, and then
+checks that nothing skipped.
 
 `npm run walkthrough` is the check that is **not** written behind the same door
 as the code. The suite calls the functions directly and was written alongside
