@@ -1,0 +1,34 @@
+# Real findings that are not secrets, and why.
+#
+# Every one has been read. None of them opens anything that exists: they are
+# the password of a database that is born and dies with `docker compose up` on
+# the reader's own machine, the four demonstration accounts, and two variables
+# that read a value rather than hold one.
+#
+# The demonstration accounts are in the code AND in the README on purpose. This
+# project demonstrates a boundary of permissions, and a boundary you cannot
+# stand on both sides of is an assertion rather than a demonstration: the four
+# identities are there so the difference can be seen in one click. The database
+# they open is created empty on the reader's machine and thrown away with the
+# container.
+#
+# It does not apply to company names or to real keys. Those block from any
+# file, for any reason.
+#
+# A note for whoever writes here: a reason must not reproduce the code it
+# excuses. This file is examined like every other one, and a reason that quotes
+# the offending line reports itself.
+
+docker-compose.yml                       # the throwaway PostgreSQL password of the demonstration
+.github/workflows/ci.yml                 # the same one, for the CI's PostgreSQL service
+backend/db/pools.js                      # reads POSTGRES_PASSWORD from the environment, with a default for the demo
+backend/auth/routes.js                   # a variable that receives what the client sent, not a value written here
+web/src/app/shell/api.service.ts         # the signature of the method that sends the credentials to the API
+backend/auth/passwords.js                # the sentence about a minimum length
+backend/seed/demo.js                     # the four demonstration accounts, documented in the README
+web/src/app/auth/sign-in.component.ts    # the same, as buttons on the sign-in page
+tools/walkthrough.mjs                    # the same, to drive the running system
+README.md                                # the table that lists them, which is half the demonstration
+tools/through-the-screen.mjs             # the same, to drive the path through the interface
+tools/who-can-do-what.mjs                # the same, to try every role against what it is promised
+tools/screenshots.mjs                    # the same, to remake the README's figures as each of them
