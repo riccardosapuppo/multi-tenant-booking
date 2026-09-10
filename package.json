@@ -6,7 +6,7 @@
   "author": "Riccardo Sapuppo",
   "license": "MIT",
   "scripts": {
-    "start": "docker compose up --build",
+    "start": "node tools/start.mjs",
     "stop": "docker compose down",
     "build": "cd web && npm install --no-audit --no-fund && npm run build",
     "test": "cd backend && node --test",

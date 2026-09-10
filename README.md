@@ -27,17 +27,26 @@ clean one.
 ```
 git clone https://github.com/riccardosapuppo/multi-tenant-booking.git
 cd multi-tenant-booking
-docker compose up --build
+npm start
 ```
 
-Then open **http://localhost:4200**. The first start creates the register,
-three centres, and the accounts below.
+That is `docker compose up --build`, waiting, and then your browser on the
+sign-in page. The waiting is the part worth having: the compose output never
+ends, so nothing in it says "now", and a first start that is opened too early
+shows the sign-in screen of an API still creating the register. What it waits
+for is `/api/health`, which answers 503 until the register exists and the three
+centres are in it — and the web container answering as well, since that is
+where the browser is sent.
+
+`npm start -- --no-open` leaves the browser alone. `docker compose up --build`
+still does exactly what it always did, for anyone who would rather watch it.
 
 If port 3000 or 4200 is already taken (3000 is what every other development
-server also wants), set your own:
+server also wants), set your own — `npm start` reads the same two variables the
+compose file does:
 
 ```
-API_PORT=3001 WEB_PORT=4300 docker compose up --build
+API_PORT=3001 WEB_PORT=4300 npm start
 ```
 
 `docker compose down` stops it and takes the data with it.
