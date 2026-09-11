@@ -654,6 +654,18 @@ export class BookComponent {
       return;
     }
     this.pending.drop();
+
+    // Back to where the confirmation came from.
+    //
+    // "Pick another time" closed the confirmation and stopped there, which left
+    // somebody looking at the form they filled in twenty seconds earlier --
+    // with the times they were choosing between still loaded, still correct and
+    // no longer on screen. The same is true of the ✕ and of Escape: all three
+    // mean "not this one", and none of them means "start again".
+    //
+    // Not after a booking, where the dialog is closed by having succeeded and
+    // the card behind it is the reference.
+    if (!this.booked() && this.answer()?.ok) this.showing.set(true);
   }
 
   /** Off to register or sign in, with the choice kept. */

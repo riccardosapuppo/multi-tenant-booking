@@ -133,6 +133,21 @@ try {
   expect('picking a time asks before it books', (await confirming.count()) === 1);
   expect('and nothing is booked while it asks', (await page.locator('.done .ref').count()) === 0);
 
+  // Out of the confirmation without booking, and back to what it came from.
+  // It used to close and stop there, leaving somebody looking at the form they
+  // filled in a minute earlier while the times they were choosing between sat
+  // loaded and off screen.
+  await confirming.getByRole('button', { name: 'Pick another time' }).click({ force: true });
+  await page.waitForTimeout(900);
+  expect(
+    'pick another time goes back to the times',
+    (await page.locator('app-results dialog[open] .times button').count()) > 0 &&
+      (await page.locator('app-confirm dialog[open]').count()) === 0
+  );
+
+  await page.locator('.times button').first().click({ force: true });
+  await page.waitForTimeout(800);
+
   await confirming.getByRole('button', { name: 'Confirm booking' }).click({ force: true });
   await page.waitForTimeout(1800);
 

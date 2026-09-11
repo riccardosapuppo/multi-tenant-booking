@@ -226,6 +226,13 @@ looking at.
   <img src="docs/phone-results.png" alt="The results dialog on a phone" width="290" />
 </p>
 
+Coming out of the confirmation without booking puts the times back on screen,
+which it did not: "Pick another time" closed the confirmation and stopped
+there, leaving somebody looking at the form they had filled in a minute earlier
+while the times they were choosing between sat loaded and off screen. The ✕ and
+Escape do the same thing, because all three mean "not this one" and none of
+them means "start again".
+
 Anything that cannot be taken back is asked about first, in the application's
 own voice rather than the browser's: cancelling an appointment, at the desk and
 in a patient's own list, and removing a centre from the console, which used to
