@@ -283,9 +283,29 @@ try {
   await page.goto(`${BASE}/desk`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);
 
+  // It opens on everything, not on one day, and says how many.
   expect(
-    'the desk says what it is showing',
-    ((await page.locator('.lede').textContent()) ?? '').includes('on one day')
+    'the desk opens on more than one day',
+    (await page.locator('input[type=date]').inputValue()) === '' &&
+      (await page.locator('tbody tr').count()) > 0
+  );
+  expect(
+    'and says how many there are',
+    /\d+ appointments?/.test((await page.locator('p.muted').first().textContent()) ?? '')
+  );
+
+  // The day is still there, as a filter somebody chooses.
+  await page.locator('input[type=date]').fill('2026-09-15');
+  await page.waitForTimeout(1500);
+  expect(
+    'a day narrows it',
+    ((await page.locator('p.muted').first().textContent()) ?? '').includes('on this day')
+  );
+  await page.getByRole('button', { name: 'All days' }).click({ force: true });
+  await page.waitForTimeout(1400);
+  expect(
+    'and giving it up puts everything back',
+    (await page.locator('input[type=date]').inputValue()) === ''
   );
 
   // And where the rest of them are. A booking made for next Thursday looked

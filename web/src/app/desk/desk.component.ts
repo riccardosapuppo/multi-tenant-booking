@@ -103,6 +103,15 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
           <input type="date" style="width: auto" [value]="day()" (change)="pick($event)" />
         </label>
 
+        @if (day()) {
+          <button type="button" class="quiet" (click)="showEveryDay()">All days</button>
+        }
+
+        <label class="row">
+          <input type="checkbox" [checked]="withPast()" (change)="togglePast($event)" />
+          <span class="muted">Include past</span>
+        </label>
+
         <!-- A morning with a gap in it and no reason for the gap is its own
              small mystery, and the desk is where somebody has to answer it. -->
         <label class="row">
@@ -146,6 +155,15 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
       }
     </div>
 
+    @if (total() > 0) {
+      <p class="muted" style="margin: 0 0 0.6rem">
+        <!-- "on this day, from today" is two answers to one question: a day
+             that has been chosen is not also a range starting now. -->
+        {{ total() }}
+        {{ total() === 1 ? 'appointment' : 'appointments' }}{{ said() }}.
+      </p>
+    }
+
     @if (loading()) {
       <p class="muted">Reading the diary…</p>
     } @else if (bookings().length === 0) {
@@ -188,7 +206,22 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
               </tr>
             }
           </tbody>
-        </table>
+      </table>
+
+        <!-- A page at a time, and the numbers say which page of how many. Next
+             and Previous alone leave somebody walking a list whose length they
+             cannot see. -->
+        @if (pages() > 1) {
+          <div class="spread" style="margin-top: 0.9rem">
+            <button type="button" class="quiet" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">
+              Previous
+            </button>
+            <span class="muted">Page {{ page() }} of {{ pages() }}</span>
+            <button type="button" class="quiet" [disabled]="page() >= pages()" (click)="goToPage(page() + 1)">
+              Next
+            </button>
+          </div>
+        }
       </div>
     }
 
@@ -211,7 +244,19 @@ export class DeskComponent {
   private readonly api = inject(ApiService);
   readonly session = inject(SessionService);
 
-  readonly day = signal(today());
+  /**
+   * The day, and it is empty on purpose.
+   *
+   * The desk opened on today and showed nothing else, so every appointment that
+   * was not today was invisible and the only way to disagree was to guess at a
+   * date picker. It opens on everything from today forward now, and the day is
+   * a filter somebody chooses rather than a question they have to answer first.
+   */
+  readonly day = signal('');
+  readonly page = signal(1);
+  readonly pages = signal(1);
+  readonly total = signal(0);
+  readonly withPast = signal(false);
   readonly bookings = signal<Booking[]>([]);
   readonly counted = signal<Array<[string, number]>>([]);
   readonly loading = signal(true);
@@ -233,10 +278,20 @@ export class DeskComponent {
 
     this.api.busyDays().subscribe({ next: (answer) => this.busy.set(answer.days), error: () => {} });
 
-    this.api.diary(this.day(), this.withCancelled()).subscribe({
+    this.api
+      .deskBookings({
+        day: this.day(),
+        past: this.withPast(),
+        cancelled: this.withCancelled(),
+        page: this.page(),
+      })
+      .subscribe({
       next: (answer) => {
         this.bookings.set(answer.bookings);
         this.counted.set(Object.entries(answer.totals));
+        this.total.set(answer.total);
+        this.pages.set(answer.pages);
+        this.page.set(answer.page);
         this.loading.set(false);
       },
       error: (error) => {
@@ -250,9 +305,36 @@ export class DeskComponent {
     });
   }
 
+  /** What the count is counting, in the words that fit the filter chosen. */
+  readonly said = computed(() => {
+    if (this.day()) return ' on this day';
+    return this.withPast() ? '' : ', from today';
+  });
+
+  /** Every control that changes what is being asked for starts at page one. */
+  private fromTheTop(): void {
+    this.page.set(1);
+    this.load();
+  }
+
+  goToPage(at: number): void {
+    this.page.set(Math.min(Math.max(at, 1), this.pages()));
+    this.load();
+  }
+
+  showEveryDay(): void {
+    this.day.set('');
+    this.fromTheTop();
+  }
+
+  togglePast(event: Event): void {
+    this.withPast.set((event.target as HTMLInputElement).checked);
+    this.fromTheTop();
+  }
+
   pick(event: Event): void {
     this.day.set((event.target as HTMLInputElement).value);
-    this.load();
+    this.fromTheTop();
   }
 
   /** Asked first. A cancelled appointment is a time given back to somebody
@@ -312,7 +394,7 @@ export class DeskComponent {
   openDay(day: string): void {
     this.day.set(day);
     this.found.set(null);
-    this.load();
+    this.fromTheTop();
   }
 
   /** "Thu 17" — enough to recognise, short enough to sit in a row of them. */
@@ -328,7 +410,7 @@ export class DeskComponent {
 
   toggleCancelled(event: Event): void {
     this.withCancelled.set((event.target as HTMLInputElement).checked);
-    this.load();
+    this.fromTheTop();
   }
 
   readonly wanted = signal('');

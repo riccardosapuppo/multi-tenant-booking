@@ -48,6 +48,34 @@ router.get('/diary', access.signedIn(), access.atLeast('staff'), async (req, res
 });
 
 /** Rooms and their sessions, so the desk can see why a morning is closed. */
+/**
+ * The appointments. Everything from today unless asked otherwise.
+ *
+ * `day` narrows to one, `past=1` includes what has been, `cancelled=1` includes
+ * what was called off, and `page` walks it. The totals are for what is on the
+ * page's filter rather than for the page, because "Private: 3" about twenty-five
+ * rows out of two hundred is a number about nothing.
+ */
+router.get('/bookings', access.signedIn(), access.atLeast('staff'), async (req, res, next) => {
+  const asked = String(req.query.day || '').trim();
+  if (asked && Number.isNaN(new Date(asked).getTime())) {
+    return res.status(400).json({ error: 'day is not a date' });
+  }
+
+  try {
+    const found = await store.bookings(req.tenant, {
+      day: asked || null,
+      includePast: req.query.past === '1',
+      withCancelled: req.query.cancelled === '1',
+      page: req.query.page,
+    });
+
+    res.json({ centre: req.tenant.slug, ...found });
+  } catch (error) {
+    next(error);
+  }
+});
+
 /** The days with appointments on them, so the diary is not a guessing game. */
 router.get('/busy', access.signedIn(), access.atLeast('staff'), async (req, res, next) => {
   try {

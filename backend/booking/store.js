@@ -270,6 +270,86 @@ async function busyDays(tenant, { from = new Date(), days = 28 } = {}) {
   return rows;
 }
 
+/**
+ * The appointments, and the day is a filter rather than a requirement.
+ *
+ * The desk used to be one day at a time and nothing else, so finding anything
+ * meant knowing its date first -- and a booking made for next Thursday looked
+ * like a booking that was never made. A list that asks a question before it
+ * will show you anything is a list that hides most of itself.
+ *
+ * So: everything from the start of today, in the order it happens, a page at a
+ * time. The past is behind a flag rather than gone, because a desk is asked
+ * about last week as well; a single day is behind the same query, because the
+ * day view is a filter of this one and not a different screen.
+ */
+async function bookings(
+  tenant,
+  { day = null, includePast = false, withCancelled = false, page = 1, limit = 25 } = {}
+) {
+  const where = [];
+  const values = [];
+
+  if (day) {
+    const from = new Date(day);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+    values.push(from.toISOString(), to.toISOString());
+    where.push(`b.starts_at >= $${values.length - 1} AND b.starts_at < $${values.length}`);
+  } else if (!includePast) {
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+    values.push(from.toISOString());
+    where.push(`b.starts_at >= $${values.length}`);
+  }
+
+  if (!withCancelled) where.push("b.status <> 'cancelled'");
+
+  const conditions = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+  const pool = tenantPool(tenant);
+
+  const counted = await pool.query(
+    `SELECT count(*)::int AS total FROM bookings b ${conditions}`,
+    values
+  );
+  const total = counted.rows[0].total;
+
+  const size = Math.min(Math.max(Number(limit) || 25, 1), 100);
+  const at = Math.max(Number(page) || 1, 1);
+
+  const { rows } = await pool.query(
+    `SELECT b.id, b.reference, b.patient_name, b.category, b.status,
+            b.starts_at, b.ends_at, b.total_cents, r.name AS room_name
+       FROM bookings b
+       JOIN rooms r ON r.id = b.room_id
+       ${conditions}
+      ORDER BY b.starts_at, r.name
+      LIMIT ${size} OFFSET ${(at - 1) * size}`,
+    values
+  );
+
+  // Counted over the whole filter rather than over the page: "Private: 3" about
+  // twenty-five rows out of two hundred is a number about nothing.
+  const byCategory = await pool.query(
+    `SELECT b.category, count(*)::int AS booked
+       FROM bookings b ${conditions}
+      ${conditions ? 'AND' : 'WHERE'} b.status <> 'cancelled'
+      GROUP BY b.category`,
+    values
+  );
+  const totals = { exempt: 0, health_service: 0, private: 0, insured: 0 };
+  for (const row of byCategory.rows) totals[row.category] = row.booked;
+
+  return {
+    bookings: rows,
+    total,
+    totals,
+    page: at,
+    pages: Math.max(Math.ceil(total / size), 1),
+  };
+}
+
 async function diary(tenant, day, { withCancelled = false } = {}) {
   const from = new Date(day);
   from.setHours(0, 0, 0, 0);
@@ -327,6 +407,7 @@ async function cancel(tenant, { reference: ref, userId = null }) {
 module.exports = {
   find,
   busyDays,
+  bookings,
   sites,
   exams,
   roomsFor,

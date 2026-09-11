@@ -250,7 +250,18 @@ marked, because "it is not there" and "you cancelled it" are different answers;
 and Find keeps them too, because "what happened to WCY-HXX" is the question a
 desk actually asks.
 
-The desk shows **one day**, and it now says so, because it did not. A booking
+The desk opens on **everything from today**, a page at a time, because a list
+that asks for a date before it will show anything hides most of itself. It used
+to open on today and show nothing else: an appointment made for next Thursday
+was invisible, and the only way to disagree with the screen was to guess at a
+date picker. Reported twice, from two different accounts, which is a screen
+failing to say something rather than two mistakes.
+
+The day is still there and is now a filter: choose one and the list narrows,
+give it up and everything comes back. The past is behind a checkbox rather than
+gone, and so are cancellations. The counts across the top are for the filter
+rather than for the page, because "Private: 3" about twenty-five rows out of two
+hundred is a number about nothing. A booking
 made for next Thursday looked like a booking that was never made: the table is
 every appointment at the centre on the day chosen above it, whoever booked it,
 and nothing on the screen said either half of that.

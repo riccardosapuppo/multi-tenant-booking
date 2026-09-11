@@ -195,6 +195,41 @@ export class ApiService {
     );
   }
 
+  /**
+   * The appointments. Everything from today unless narrowed.
+   *
+   * The day is a filter here rather than a requirement, which is the whole
+   * difference from the diary call it replaces: a list that asks for a date
+   * before it will show anything hides most of itself.
+   */
+  deskBookings(options: {
+    day?: string;
+    past?: boolean;
+    cancelled?: boolean;
+    page?: number;
+  }): Observable<{
+    bookings: Booking[];
+    total: number;
+    totals: Record<string, number>;
+    page: number;
+    pages: number;
+  }> {
+    const asked = new URLSearchParams();
+    if (options.day) asked.set('day', options.day);
+    if (options.past) asked.set('past', '1');
+    if (options.cancelled) asked.set('cancelled', '1');
+    if (options.page && options.page > 1) asked.set('page', String(options.page));
+
+    const tail = asked.toString();
+    return this.http.get<{
+      bookings: Booking[];
+      total: number;
+      totals: Record<string, number>;
+      page: number;
+      pages: number;
+    }>(`/api/centre/desk/bookings${tail ? `?${tail}` : ''}`);
+  }
+
   /** The days with appointments on them, and how many. */
   busyDays(): Observable<{ days: { day: string; booked: number }[] }> {
     return this.http.get<{ days: { day: string; booked: number }[] }>('/api/centre/desk/busy');
