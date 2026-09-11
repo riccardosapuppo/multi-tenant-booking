@@ -25,7 +25,10 @@ router.get('/diary', access.signedIn(), access.atLeast('staff'), async (req, res
   if (Number.isNaN(day.getTime())) return res.status(400).json({ error: 'day is not a date' });
 
   try {
-    const bookings = await store.diary(req.tenant, day);
+    // The totals below already ignore cancelled ones, which is what made this
+    // safe to add: they count who is coming, whatever the table is showing.
+    const withCancelled = req.query.cancelled === '1';
+    const bookings = await store.diary(req.tenant, day, { withCancelled });
     res.json({
       centre: req.tenant.slug,
       day: availability.asDay(day),
@@ -45,6 +48,15 @@ router.get('/diary', access.signedIn(), access.atLeast('staff'), async (req, res
 });
 
 /** Rooms and their sessions, so the desk can see why a morning is closed. */
+/** The days with appointments on them, so the diary is not a guessing game. */
+router.get('/busy', access.signedIn(), access.atLeast('staff'), async (req, res, next) => {
+  try {
+    res.json({ centre: req.tenant.slug, days: await store.busyDays(req.tenant) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 /** A booking by its reference or the patient's name, on any day. */
 router.get('/find', access.signedIn(), access.atLeast('staff'), async (req, res, next) => {
   try {

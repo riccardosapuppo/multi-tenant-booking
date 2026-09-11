@@ -113,6 +113,13 @@ try {
   });
   say('confirm.png');
 
+  // Twice. Escape closes the confirmation, and closing the confirmation puts
+  // the times back -- which is the point of it, and leaves a second modal over
+  // the page. A <dialog> opened with showModal makes everything behind it
+  // inert, so the sign-out in the header never receives the click and the only
+  // symptom is a timeout waiting for a URL to change.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
   await leave(page);

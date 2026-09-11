@@ -195,9 +195,17 @@ export class ApiService {
     );
   }
 
-  diary(day: string): Observable<{ day: string; bookings: Booking[]; totals: Record<string, number> }> {
+  /** The days with appointments on them, and how many. */
+  busyDays(): Observable<{ days: { day: string; booked: number }[] }> {
+    return this.http.get<{ days: { day: string; booked: number }[] }>('/api/centre/desk/busy');
+  }
+
+  diary(
+    day: string,
+    withCancelled = false
+  ): Observable<{ day: string; bookings: Booking[]; totals: Record<string, number> }> {
     return this.http.get<{ day: string; bookings: Booking[]; totals: Record<string, number> }>(
-      `/api/centre/desk/diary?day=${day}`
+      `/api/centre/desk/diary?day=${day}${withCancelled ? '&cancelled=1' : ''}`
     );
   }
 

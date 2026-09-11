@@ -244,7 +244,33 @@ async function find(tenant, wanted) {
   return rows;
 }
 
-async function diary(tenant, day) {
+/**
+ * Which days have anybody on them, from today forward.
+ *
+ * The desk shows one day, and somebody looking for a booking has to know which
+ * one -- a booking made for next Thursday looks like a booking that was never
+ * made. Find answers that when you have a name or a reference. This answers it
+ * when you have neither: the days with appointments on them, and how many, so
+ * the diary stops being a room you have to guess the number of.
+ */
+async function busyDays(tenant, { from = new Date(), days = 28 } = {}) {
+  const start = new Date(from);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + days);
+
+  const { rows } = await tenantPool(tenant).query(
+    `SELECT to_char(b.starts_at, 'YYYY-MM-DD') AS day, count(*)::int AS booked
+       FROM bookings b
+      WHERE b.starts_at >= $1 AND b.starts_at < $2 AND b.status <> 'cancelled'
+      GROUP BY 1
+      ORDER BY 1`,
+    [start.toISOString(), end.toISOString()]
+  );
+  return rows;
+}
+
+async function diary(tenant, day, { withCancelled = false } = {}) {
   const from = new Date(day);
   from.setHours(0, 0, 0, 0);
   const to = new Date(from);
@@ -256,12 +282,17 @@ async function diary(tenant, day) {
        FROM bookings b
        JOIN rooms r ON r.id = b.room_id
       WHERE b.starts_at >= $1 AND b.starts_at < $2
-        -- A cancelled appointment is not somebody who is coming. Cancelling
-        -- marks the row rather than deleting it, which is right -- the record is
-        -- worth keeping -- and this query did not know that, so the desk went on
-        -- listing people who had rung to say they would not be there, and the
-        -- Cancel button looked as though it had done nothing.
-        AND b.status <> 'cancelled'
+        -- A cancelled appointment is not somebody who is coming, so by default
+        -- it is not on the day. Cancelling marks the row rather than deleting
+        -- it, which is right -- the record is worth keeping -- and this query
+        -- did not know that, so the desk listed people who had rung to say they
+        -- would not be there and the Cancel button looked as though it had done
+        -- nothing.
+        --
+        -- Asked for, they come back: a morning with a gap in it and no reason
+        -- for the gap is its own small mystery, and the desk is where somebody
+        -- has to answer it.
+        ${withCancelled ? '' : "AND b.status <> 'cancelled'"}
       ORDER BY b.starts_at, r.name`,
     [from.toISOString(), to.toISOString()]
   );
@@ -295,6 +326,7 @@ async function cancel(tenant, { reference: ref, userId = null }) {
 
 module.exports = {
   find,
+  busyDays,
   sites,
   exams,
   roomsFor,

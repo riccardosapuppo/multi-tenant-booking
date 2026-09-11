@@ -35,7 +35,6 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
          only way was to guess dates -- which is how a booking made for next
          Thursday looks like a booking that was never made. -->
     <div class="card" style="margin-bottom: 1rem">
-           it Angular binds a custom event of that name which nothing ever
       <!-- The DOM submit event, not ngSubmit: that one needs FormsModule, and
            without it Angular binds a custom event of that name which nothing
            ever fires. The button worked, silently, on nothing. -->
@@ -104,6 +103,17 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
           <input type="date" style="width: auto" [value]="day()" (change)="pick($event)" />
         </label>
 
+        <!-- A morning with a gap in it and no reason for the gap is its own
+             small mystery, and the desk is where somebody has to answer it. -->
+        <label class="row">
+          <input
+            type="checkbox"
+            [checked]="withCancelled()"
+            (change)="toggleCancelled($event)"
+          />
+          <span class="muted">Show cancelled</span>
+        </label>
+
         <div class="row">
           <span class="muted">Booked this day, by who pays:</span>
           @for (entry of counted(); track entry[0]) {
@@ -111,6 +121,29 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
           }
         </div>
       </div>
+
+      <!-- Where the appointments actually are.
+           The diary shows one day, and somebody who does not know which day is
+           reduced to guessing at a date picker: a booking made for next
+           Thursday looks like a booking that was never made. Find answers that
+           when you have a name or a reference; this answers it when you have
+           neither. -->
+      @if (busy().length > 0) {
+        <div class="row" style="margin-top: 0.8rem; flex-wrap: wrap; gap: 0.35rem">
+          <span class="muted">Days with appointments:</span>
+          @for (entry of busy(); track entry.day) {
+            <button
+              type="button"
+              class="tag"
+              [class.ok]="entry.day === day()"
+              style="cursor: pointer; border: 1px solid var(--line)"
+              (click)="openDay(entry.day)"
+            >
+              {{ shortDay(entry.day) }} · {{ entry.booked }}
+            </button>
+          }
+        </div>
+      }
     </div>
 
     @if (loading()) {
@@ -135,14 +168,21 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
               <tr>
                 <td class="mono">{{ clock(booking.starts_at) }}–{{ clock(booking.ends_at) }}</td>
                 <td>{{ booking.room_name }}</td>
-                <td>{{ booking.patient_name }}</td>
+                <td>
+                  {{ booking.patient_name }}
+                  @if (booking.status === 'cancelled') {
+                    <span class="tag warn">Cancelled</span>
+                  }
+                </td>
                 <td><span class="tag">{{ label(booking.category) }}</span></td>
                 <td class="mono">{{ booking.reference }}</td>
                 <td style="text-align: right">
                   @if (booking.status === 'cancelled') {
                     <span class="tag bad">cancelled</span>
                   } @else {
-                    <button type="button" class="danger" (click)="ask(booking)">Cancel</button>
+                    @if (booking.status !== 'cancelled') {
+                      <button type="button" class="danger" (click)="ask(booking)">Cancel</button>
+                    }
                   }
                 </td>
               </tr>
@@ -191,7 +231,9 @@ export class DeskComponent {
     this.loading.set(true);
     this.problem.set(null);
 
-    this.api.diary(this.day()).subscribe({
+    this.api.busyDays().subscribe({ next: (answer) => this.busy.set(answer.days), error: () => {} });
+
+    this.api.diary(this.day(), this.withCancelled()).subscribe({
       next: (answer) => {
         this.bookings.set(answer.bookings);
         this.counted.set(Object.entries(answer.totals));
@@ -264,6 +306,31 @@ export class DeskComponent {
   readonly longDate = longDate;
 
   /** What is being looked for, what was looked for, and what came back. */
+  /** The days that have anybody on them, so the diary is not a guessing game. */
+  readonly busy = signal<{ day: string; booked: number }[]>([]);
+
+  openDay(day: string): void {
+    this.day.set(day);
+    this.found.set(null);
+    this.load();
+  }
+
+  /** "Thu 17" — enough to recognise, short enough to sit in a row of them. */
+  shortDay(day: string): string {
+    return new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+    });
+  }
+
+  /** Whether the day is showing what was cancelled as well as who is coming. */
+  readonly withCancelled = signal(false);
+
+  toggleCancelled(event: Event): void {
+    this.withCancelled.set((event.target as HTMLInputElement).checked);
+    this.load();
+  }
+
   readonly wanted = signal('');
   readonly searched = signal('');
   readonly found = signal<any[] | null>(null);

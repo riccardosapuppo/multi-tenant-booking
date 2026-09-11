@@ -255,6 +255,16 @@ made for next Thursday looked like a booking that was never made: the table is
 every appointment at the centre on the day chosen above it, whoever booked it,
 and nothing on the screen said either half of that.
 
+It also says **which days have anybody on them**, with the count, because the
+other half of the confusion is not knowing where to look: a booking made for
+next Thursday looks like a booking that was never made when the screen is
+showing today, and the only way to disagree with it was to guess at a date
+picker. Each of those opens that day.
+
+And the day can be asked to show what was **cancelled** as well as who is
+coming. A morning with a gap in it and no reason for the gap is its own small
+mystery, and the desk is where somebody has to answer it.
+
 It also answers the other question a desk is asked all day. Somebody rings and
 says a reference, or a surname, and until now the only way to find them was to
 guess dates. **Find** takes either -- a reference matched whole, because a

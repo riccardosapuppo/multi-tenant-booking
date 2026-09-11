@@ -255,6 +255,22 @@ try {
     (await page.locator('tr', { hasText: reference }).count()) === 0
   );
 
+  // Gone from the day, and not gone. A morning with a gap in it and no reason
+  // for the gap is its own small mystery, and the desk is where somebody has to
+  // answer it -- so the day can be asked to show what was cancelled as well as
+  // who is coming.
+  await page.getByText('Show cancelled').click();
+  await page.waitForTimeout(1400);
+  const scrapped = page.locator('tr', { hasText: reference });
+  expect('asked for, the cancelled one comes back', (await scrapped.count()) === 1);
+  expect('marked as what it is', ((await scrapped.textContent()) ?? '').includes('Cancelled'));
+  expect(
+    'and without a button to cancel it again',
+    (await scrapped.getByRole('button', { name: 'Cancel' }).count()) === 0
+  );
+  await page.getByText('Show cancelled').click();
+  await page.waitForTimeout(1200);
+
   // ----------------------------------------------------------------------
   // Finding a booking without knowing which day it is on.
   //
@@ -270,6 +286,21 @@ try {
   expect(
     'the desk says what it is showing',
     ((await page.locator('.lede').textContent()) ?? '').includes('on one day')
+  );
+
+  // And where the rest of them are. A booking made for next Thursday looked
+  // like a booking that was never made, and the only way to disagree with the
+  // screen was to guess at a date picker.
+  const days = page.locator('button.tag');
+  expect('the desk says which days have appointments', (await days.count()) > 1);
+
+  const elsewhere = await days.nth(1).textContent();
+  await days.nth(1).click({ force: true });
+  await page.waitForTimeout(1500);
+  expect(
+    'and one of them opens that day',
+    (await page.locator('tbody tr').count()) > 0,
+    (elsewhere ?? '').trim()
   );
 
   await page.locator('input[placeholder*="reference"]').fill('Egerton');
