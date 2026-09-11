@@ -93,19 +93,29 @@ const CATEGORIES = [
           <button type="button" class="head" (click)="toggle('site')">
             <app-icon name="site" class="badge" />
             <span class="tick" [class.set]="true">✓</span>
-            <span class="said">Site: <strong>{{ siteName() }}</strong></span>
+            <span class="said">Site: <strong>{{ siteSaid() }}</strong></span>
             <span class="chev">⌄</span>
           </button>
           @if (panel() === 'site') {
             <div class="body">
+              <!-- What is in each building, next to its name. A list of
+                   addresses cannot answer "which one should I go to"; these are
+                   separate buildings with different machines, and the scanner
+                   is in one of them. -->
               <label class="choice">
                 <input type="radio" name="site" [checked]="siteId() === null" (change)="pickSite(null)" />
-                <span>Any site</span>
+                <span>
+                  Any of them
+                  <small>Whichever can do it soonest. This is usually what you want.</small>
+                </span>
               </label>
               @for (site of sites(); track site.id) {
                 <label class="choice">
                   <input type="radio" name="site" [checked]="siteId() === site.id" (change)="pickSite(site.id)" />
-                  <span>{{ site.name }}<small>{{ site.address }}</small></span>
+                  <span>
+                    {{ site.name }}
+                    <small>{{ machinesAt(site) }} · {{ site.address }}</small>
+                  </span>
                 </label>
               }
             </div>
@@ -333,6 +343,33 @@ export class BookComponent {
     if (id === null) return 'Any';
     return this.sites().find((site) => site.id === id)?.name ?? 'Any';
   });
+
+  /**
+   * What the closed panel says.
+   *
+   * "Site: Any" told somebody who had just chosen a centre nothing at all --
+   * not what a site is, not that this centre has more than one, not why they
+   * might care. Counting them says all three in four words.
+   */
+  readonly siteSaid = computed(() => {
+    const id = this.siteId();
+    if (id !== null) return this.siteName();
+    const many = this.sites().length;
+    return many > 1 ? `Any of its ${many} sites` : 'Any';
+  });
+
+  /** The machines in a building, spelled out rather than abbreviated. */
+  machinesAt(site: Site): string {
+    const said: Record<string, string> = {
+      MR: 'MRI',
+      CT: 'CT',
+      US: 'Ultrasound',
+      XR: 'X-ray',
+    };
+    const has = site.modalities ?? [];
+    if (has.length === 0) return 'No machines listed';
+    return has.map((one) => said[one] ?? one).join(', ');
+  }
 
   readonly categoryLabel = computed(
     () => CATEGORIES.find((one) => one.value === this.category())?.label ?? this.category()

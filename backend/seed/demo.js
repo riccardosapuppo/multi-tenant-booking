@@ -157,9 +157,15 @@ async function fillCentre(tenant, shape) {
 const SHAPES = {
   northgate: {
     priceFactor: 1,
+    // Three buildings, and deliberately not three of the same building. A
+    // group of diagnostic centres does not put an MRI in every one of them --
+    // the scanner is the expensive thing and it lives in one place, while an
+    // X-ray point can sit in a high street. That asymmetry is why the booking
+    // question starts with where rather than with what.
     sites: [
       { name: 'Northgate Main', address: '1 Example Way, Anytown' },
       { name: 'Northgate Annexe', address: '9 Sample Road, Anytown' },
+      { name: 'Northgate Point', address: '22 Sample Lane, Anytown' },
     ],
     rooms: [
       {
@@ -190,12 +196,25 @@ const SHAPES = {
         modality: 'CT',
         sessions: [{ weekdays: 'NYNYNNN', opens: '09:00', closes: '13:00' }],
       },
+      {
+        // A walk-in point: one machine, open all week and late. Whoever needs a
+        // chest film has somewhere to go that is not the building with the MRI
+        // in it, which is the argument for having sites at all.
+        site: 2,
+        code: 'XR2',
+        name: 'X-ray room',
+        modality: 'XR',
+        sessions: [{ weekdays: 'YYYYYYN', opens: '08:00', closes: '20:00' }],
+      },
     ],
   },
   riverside: {
     // Dearer, tighter, and open less. The centre where the quotas bite.
     priceFactor: 1.15,
-    sites: [{ name: 'Riverside Clinic', address: '4 Demo Street, Othertown' }],
+    sites: [
+      { name: 'Riverside Clinic', address: '4 Demo Street, Othertown' },
+      { name: 'Riverside Annexe', address: '17 Demo Street, Othertown' },
+    ],
     rooms: [
       {
         site: 0,
@@ -219,6 +238,17 @@ const SHAPES = {
         name: 'X-ray room',
         modality: 'XR',
         sessions: [{ weekdays: 'YYYYYNN', opens: '09:00', closes: '12:00', max_total: 12 }],
+      },
+      {
+        // The ultrasound is down the road rather than in the clinic, so at this
+        // centre an abdominal ultrasound and an X-ray on the same morning are
+        // two journeys. The search says so: no single room does both, and one
+        // appointment happens in one room.
+        site: 1,
+        code: 'US1',
+        name: 'Ultrasound room',
+        modality: 'US',
+        sessions: [{ weekdays: 'NYNYNNN', opens: '14:00', closes: '18:00' }],
       },
     ],
   },

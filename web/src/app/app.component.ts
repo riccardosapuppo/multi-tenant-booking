@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { LogoComponent } from './shell/logo.component';
@@ -58,7 +58,7 @@ import { SessionService } from './shell/session.service';
                  it has in common with three others. Switching is the name
                  itself -- a real <select> laid over it, so it keeps the
                  keyboard and the screen reader that a menu of divs loses. -->
-            @if (centres().length > 1) {
+            @if (switchable().length > 1) {
               <label class="wordmark switchable">
                 <strong>{{ session.centreName() ?? 'Choose a centre' }}<span class="chev" aria-hidden="true">⌄</span></strong>
                 <span class="what">Booking platform</span>
@@ -67,7 +67,7 @@ import { SessionService } from './shell/session.service';
                   (change)="switch($event)"
                   aria-label="Centre"
                 >
-                  @for (grant of centres(); track grant.slug) {
+                  @for (grant of switchable(); track grant.slug) {
                     <option [value]="grant.slug">{{ grant.name ?? grant.slug }}</option>
                   }
                 </select>
@@ -162,6 +162,39 @@ export class AppComponent {
   readonly centres = computed(() => this.session.grants());
 
   /**
+   * The centres the name in the header can be switched between.
+   *
+   * For somebody signed in these are their own: switching is moving between
+   * places they belong to. A visitor belongs nowhere and was therefore given no
+   * way back at all -- they chose a centre once, from a list they could not
+   * return to, and the only way out was to clear the browser's storage. So for
+   * them it is the public list, which is the same list they chose from.
+   */
+  readonly openCentres = signal<{ slug: string; name: string }[]>([]);
+
+  readonly switchable = computed<{ slug: string; name?: string }[]>(() =>
+    this.session.signedIn() ? this.session.grants() : this.openCentres()
+  );
+
+  constructor() {
+    // The tab says which page and which centre, not just the product name.
+    keepTitle();
+
+    // Only for a visitor, and only once. Somebody signed in already has their
+    // centres and asking the platform for the public list as well would be a
+    // request whose answer is on screen.
+    effect(() => {
+      if (this.session.signedIn() || this.openCentres().length > 0) return;
+      this.api.openCentres().subscribe({
+        next: (answer) => this.openCentres.set(answer.centres),
+        // A header that cannot offer the list is a header without a switcher,
+        // which is where this started. Nothing to report to anybody.
+        error: () => {},
+      });
+    });
+  }
+
+  /**
    * What this account is, right here.
    *
    * The platform administrator is deliberately not a fifth value of the same
@@ -189,13 +222,13 @@ export class AppComponent {
     }
   });
 
-  constructor() {
-    // The tab says which page and which centre, not just the product name.
-    keepTitle();
-  }
-
   switch(event: Event): void {
     const slug = (event.target as HTMLSelectElement).value;
+    // The name the header shows comes from grants when there are any and from
+    // the public list otherwise, so a visitor switching centre has to carry the
+    // new name across or the header falls back to the slug.
+    const said = this.openCentres().find((one) => one.slug === slug)?.name;
+    if (said) this.session.visitingName.set(said);
     this.session.lookAt(slug || null);
 
     // Back to somewhere that certainly exists for the new centre. Staying on a

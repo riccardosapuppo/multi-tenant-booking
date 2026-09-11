@@ -109,6 +109,21 @@ because it changes which times exist.
 
 ![The booking panels: site, two exams chosen with Add another exam, payment category, preferred day and time of day](docs/booking-panels.png)
 
+The first question is **where**, and it is first for a reason that only shows
+if the sites are allowed to differ. A group of diagnostic centres does not put
+an MRI in every building: the scanner is the expensive thing and it lives in
+one place, while an X-ray point can sit in a high street. So Northgate has
+three sites -- MRI and X-ray in the main one, CT and ultrasound in the annexe,
+X-ray alone at the point, open late all week -- and the panel says which
+machines are in each, next to the address. It used to say "Site: Any" and
+nothing else, which tells somebody who has just chosen a centre neither what a
+site is nor that this centre has three.
+
+That is also what makes two exams in one visit a real question rather than a
+checkbox. One appointment happens in one room, so an ultrasound and an X-ray at
+Riverside are two journeys: the ultrasound is down the road. The search says
+so, in those words, instead of returning nothing.
+
 The answer opens over the question that asked for it, and it is **days** rather
 than slots: a card per day with the date large, the total price for everything
 asked for, the site, and the times beside it. Each day also carries a bar

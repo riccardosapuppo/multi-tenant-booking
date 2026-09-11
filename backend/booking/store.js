@@ -24,9 +24,34 @@ function reference() {
   return `${letters.slice(0, 3)}-${letters.slice(3)}`;
 }
 
+/**
+ * The centre's sites, and what each of them can actually do.
+ *
+ * The modalities come with them because otherwise a list of sites is a list of
+ * addresses, and "which one should I go to" has no answer on the screen. These
+ * are separate buildings with different machines in them -- one has the MRI,
+ * another the CT and the ultrasound -- and that is the whole reason the
+ * question is asked before the exam is chosen.
+ *
+ * Aggregated in the query rather than by asking for each site's rooms in turn:
+ * a list that opens a round trip per row is instant with three and a spinner
+ * with thirty.
+ */
 async function sites(tenant) {
   const { rows } = await tenantPool(tenant).query(
-    'SELECT id, name, address FROM sites WHERE active ORDER BY name'
+    `SELECT s.id,
+            s.name,
+            s.address,
+            COALESCE(
+              array_agg(DISTINCT r.modality ORDER BY r.modality)
+                FILTER (WHERE r.id IS NOT NULL AND r.active),
+              '{}'
+            ) AS modalities
+       FROM sites s
+       LEFT JOIN rooms r ON r.site_id = s.id
+      WHERE s.active
+      GROUP BY s.id, s.name, s.address
+      ORDER BY s.name`
   );
   return rows;
 }

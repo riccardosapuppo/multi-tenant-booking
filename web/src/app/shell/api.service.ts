@@ -31,6 +31,8 @@ export interface Availability {
 }
 
 export interface Site {
+  /** Which machines are in this building: MR, CT, US, XR. */
+  modalities?: string[];
   id: number;
   name: string;
   address: string;
