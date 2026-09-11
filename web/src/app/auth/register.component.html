@@ -1,3 +1,13 @@
+@if (!session.centre()) {
+  <!-- An account starts as a patient somewhere, so there is nothing to fill in
+       until that somewhere is known. Pressing "Create account" in the header
+       before choosing a centre used to reach the API and come back with
+       "no centre given", which is true and is not an answer. -->
+  <app-centre-picker
+    heading="Which centre are you registering at?"
+    blurb="One account works across the platform. It starts you as a patient at the centre you choose here, and you can be at more than one."
+  />
+} @else {
 <section class="page">
   <div class="intro">
     <h1>Create an account</h1>
@@ -85,3 +95,4 @@
     </p>
   </form>
 </section>
+}

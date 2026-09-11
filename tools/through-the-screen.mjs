@@ -217,7 +217,11 @@ try {
   await page.waitForTimeout(900);
 
   expect('a visitor is asked which centre, not for a password', (await page.locator('.choices button').count()) > 0);
-  await page.locator('.choices button').first().click();
+  // By name, not by position. `.first()` was whichever centre sorted first,
+  // which changed the moment a third one was in the list -- and the one it
+  // landed on has nothing bookable online, so the next step failed for a
+  // reason that had nothing to do with what it was checking.
+  await page.locator('.choices button', { hasText: 'Northgate' }).click();
   await page.waitForTimeout(1400);
 
   expect('and then sees the exams without signing in', (await page.locator('label', { hasText: 'MRI knee' }).count()) > 0);
@@ -250,6 +254,38 @@ try {
 
   const theirs = (await page.locator('.done .ref').textContent())?.trim() ?? '';
   expect('booked, in the name they registered with', /^[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(theirs), theirs);
+
+  // ----------------------------------------------------------------------
+  // Registering without having chosen a centre first.
+  //
+  // The header offers "Create account" to anybody, including somebody who has
+  // just arrived and picked nothing. An account starts as a patient somewhere,
+  // so the form had nowhere to put them: it posted, the API answered
+  // "no centre given", and that landed in the page as the error -- true, and
+  // not an answer. Found by using it, which is the only way this one could
+  // have been found.
+  console.log('\nRegistering before choosing anything');
+
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.goto(`${BASE}/register`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+
+  expect('the form asks which centre before it asks anything else', (await page.locator('.pick-centre').count()) === 1);
+  expect('and shows no form until it knows', (await page.locator('.form').count()) === 0);
+
+  await page.locator('.choices button', { hasText: 'Northgate' }).click();
+  await page.waitForTimeout(700);
+  expect('then the form', (await page.locator('.form').count()) === 1);
+
+  await page.getByRole('button', { name: 'Fill in invented details' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: /Create account/ }).click({ force: true });
+  await page.waitForTimeout(3000);
+
+  expect('and the account is made, not refused', (await page.locator('.problem').count()) === 0);
 
   console.log('');
   if (failures > 0) {

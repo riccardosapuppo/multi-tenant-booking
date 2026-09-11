@@ -8,6 +8,7 @@ import { PendingService, PickedSlot } from '../shell/pending';
 import { clock, longDate } from '../shell/dates';
 import { ResultsComponent } from './results.component';
 import { ConfirmComponent } from './confirm.component';
+import { CentrePickerComponent } from '../shell/centre-picker.component';
 import { IconComponent } from '../shell/icon.component';
 
 /**
@@ -63,20 +64,12 @@ const CATEGORIES = [
 @Component({
   selector: 'app-book',
   standalone: true,
-  imports: [FormsModule, ResultsComponent, ConfirmComponent, IconComponent],
+  imports: [FormsModule, ResultsComponent, ConfirmComponent, CentrePickerComponent, IconComponent],
   template: `
     @if (!session.centre()) {
       <!-- The first question on a platform serving several centres, and until
            now nobody without an account was allowed to be asked it. -->
-      <section class="pick-centre">
-        <h2>Which centre?</h2>
-        <p>Prices, opening hours and what can be booked online are each centre's own.</p>
-        <div class="choices">
-          @for (centre of openCentres(); track centre.slug) {
-            <button type="button" (click)="enter(centre)">{{ centre.name }}</button>
-          }
-        </div>
-      </section>
+      <app-centre-picker />
     } @else {
     <div class="notice">
       Online booking at <strong>{{ session.centreName() }}</strong> is for the exams listed
@@ -167,7 +160,18 @@ const CATEGORIES = [
                   </label>
                 }
                 @if (visible().length === 0) {
-                  <p class="muted">Nothing here matches that.</p>
+                  <!-- Two different emptinesses. "Nothing matches that" is about
+                       what was typed; a centre with nothing bookable online is
+                       about the centre, and saying the first when it is the
+                       second sends somebody back to a filter they never used. -->
+                  @if (exams().length === 0) {
+                    <p class="muted">
+                      This centre has nothing bookable online yet. Its desk takes bookings
+                      by telephone.
+                    </p>
+                  } @else {
+                    <p class="muted">Nothing here matches that.</p>
+                  }
                 }
               </div>
             </div>
@@ -324,9 +328,6 @@ export class BookComponent {
   /** Whether the confirmation is on screen. */
   readonly confirming = signal(false);
 
-  /** The centres a visitor may choose between, before they have an account. */
-  readonly openCentres = signal<{ slug: string; name: string }[]>([]);
-
   readonly siteName = computed(() => {
     const id = this.siteId();
     if (id === null) return 'Any';
@@ -387,17 +388,6 @@ export class BookComponent {
       if (this.pending.slot() && this.session.signedIn() && !this.booked()) {
         this.confirming.set(true);
       }
-    });
-
-    // Only when there is no centre to be in. Somebody signed in has one from
-    // their grants, and asking the platform for the public list as well would
-    // be a request whose answer is already on screen.
-    effect(() => {
-      if (this.session.centre() || this.openCentres().length > 0) return;
-      this.api.openCentres().subscribe({
-        next: (answer) => this.openCentres.set(answer.centres),
-        error: () => this.problem.set('The list of centres did not load.'),
-      });
     });
 
     // The price list belongs to the centre, so it is re-read when the centre
@@ -531,12 +521,6 @@ export class BookComponent {
 
     this.pending.hold(slot);
     this.confirming.set(true);
-  }
-
-  /** Chosen from the list above: the centre this visit is about. */
-  enter(centre: { slug: string; name: string }): void {
-    this.session.visitingName.set(centre.name);
-    this.session.lookAt(centre.slug);
   }
 
   /**

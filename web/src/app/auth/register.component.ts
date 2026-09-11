@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
 import { PendingService } from '../shell/pending';
+import { CentrePickerComponent } from '../shell/centre-picker.component';
 
 /**
  * Making an account, which on this platform happens AT a centre.
@@ -32,7 +33,7 @@ import { PendingService } from '../shell/pending';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, CentrePickerComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
 })
