@@ -211,3 +211,22 @@
   .panel, .head, .tick, .chev, .choice { transition: none; }
   .tick.set, .body, .picked .one { animation: none; }
 }
+
+/* Exams that exist here and are not booked here.
+ *
+ * Shown rather than hidden, and visibly not a choice: a row that looks
+ * selectable and refuses is worse than one that says why up front.
+ */
+.choice.by-phone {
+  cursor: default;
+}
+
+.choice.by-phone > span {
+  color: var(--ink-faint);
+}
+
+.choice.by-phone .ring {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--warn);
+}

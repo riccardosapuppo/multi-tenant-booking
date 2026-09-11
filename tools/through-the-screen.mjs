@@ -310,6 +310,19 @@ try {
   await page.waitForTimeout(500);
   await page.getByText('Choose an exam').click();
   await page.waitForTimeout(400);
+
+  // While the list is open, and only while it is open: the exam this centre
+  // does and will not book online. It is in the list rather than filtered out
+  // of it -- hiding it told somebody looking for a CT with contrast that the
+  // centre does not do it, which is the wrong thing to be wrong about.
+  const phoneOnly = page.locator('.choice.by-phone').first();
+  expect('an exam that is not bookable online is still in the list', (await phoneOnly.count()) === 1);
+  expect('and cannot be chosen', await phoneOnly.locator('input[type=checkbox]').isDisabled());
+  expect(
+    'and says what to do instead',
+    ((await phoneOnly.textContent()) ?? '').includes('Ring the centre')
+  );
+
   await page.locator('label', { hasText: 'MRI knee' }).first().click();
   await page.waitForTimeout(300);
   await page.locator('button.search').click({ force: true });

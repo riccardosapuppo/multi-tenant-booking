@@ -54,9 +54,20 @@ import { clock, dayNumber, dayOfWeek, monthOf, yearOf } from '../shell/dates';
                     These cannot be done in one visit here.
                   }
                 } @else if (found.reason === 'not_bookable_online') {
-                  {{ (found.exams ?? [])[0]?.name }} is not bookable online.
+                  <!-- All of them, not the first one. With two unbookable exams
+                       this named one and left the other to be discovered by
+                       trying again. -->
+                  {{ named(found) }}
+                  {{ (found.exams ?? []).length === 1 ? 'is' : 'are' }} not bookable online.
+                } @else if (found.reason === 'unknown_exam') {
+                  {{ howMany() === 1 ? 'That exam' : 'One of those exams' }} is not on this
+                  centre's list.
                 } @else {
-                  That is not offered at this centre.
+                  <!-- A reason this screen has not been taught. Saying "not
+                       offered at this centre" to anything unrecognised is how a
+                       screen confidently describes something that did not
+                       happen; the engine's own word is at least true. -->
+                  The search was refused: {{ found.reason }}.
                 }
               </p>
               <p class="why">
@@ -72,10 +83,14 @@ import { clock, dayNumber, dayOfWeek, monthOf, yearOf } from '../shell/dates';
                     room. Book them separately, or choose a different site.
                   }
                 } @else if (found.reason === 'not_bookable_online') {
-                  It needs a doctor to approve it first. Ring the centre and they will
+                  The list says why, next to each of them. Ring the centre and they will
                   arrange it.
+                } @else if (found.reason === 'unknown_exam') {
+                  Centres keep their own lists, so an exam chosen at one is not always on
+                  the next one's. Choose again from the list.
                 } @else {
-                  Choose another exam from the list.
+                  That is not a refusal this screen knows how to explain. The list above is
+                  the place to start again.
                 }
               </p>
               <button type="button" (click)="shut()">Change the search</button>
@@ -196,6 +211,14 @@ export class ResultsComponent {
 
   fillOf(day: SearchDay): string {
     return `${Math.round((day.times.length / this.most()) * 100)}%`;
+  }
+
+  /** Every exam the engine refused, in a sentence rather than the first one. */
+  named(found: SearchAnswer): string {
+    const names = (found.exams ?? []).map((exam) => exam.name);
+    if (names.length === 0) return 'That exam';
+    if (names.length === 1) return names[0]!;
+    return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   }
 
   money(cents: number): string {

@@ -124,6 +124,12 @@ machines are in each, next to the address. It used to say "Site: Any" and
 nothing else, which tells somebody who has just chosen a centre neither what a
 site is nor that this centre has three.
 
+The list also shows what this centre does and will **not** book online -- here a
+CT angiography, because a doctor has to approve the contrast dose first. It used
+to be filtered out, which made the list wrong in the direction that wastes an
+afternoon: somebody looking for it concluded the centre does not do it. It is
+shown, it cannot be chosen, and it says to ring.
+
 That is also what makes two exams in one visit a real question rather than a
 checkbox. One appointment happens in one room, so an ultrasound and an X-ray at
 Riverside are two journeys: the ultrasound is down the road. The search says

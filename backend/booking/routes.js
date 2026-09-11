@@ -11,10 +11,22 @@ const router = express.Router();
 
 const CATEGORIES = new Set(['exempt', 'health_service', 'private', 'insured']);
 
-/** What this centre offers. Open without signing in: it is a price list. */
+/**
+ * What this centre offers. Open without signing in: it is a price list.
+ *
+ * Including the ones that cannot be booked online, which this used to filter
+ * out. Hiding them made the list a lie in the direction that wastes somebody's
+ * afternoon: a patient looking for a CT with contrast concluded this centre
+ * does not do it, when what is true is that a doctor has to approve the dose
+ * first and it is booked by telephone. Each one carries `bookable` and the note
+ * saying why, and the interface shows them without letting them be chosen.
+ */
 router.get('/exams', async (req, res, next) => {
   try {
-    res.json({ centre: req.tenant.slug, exams: await store.exams(req.tenant) });
+    res.json({
+      centre: req.tenant.slug,
+      exams: await store.exams(req.tenant, { bookableOnly: false }),
+    });
   } catch (error) {
     next(error);
   }

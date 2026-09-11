@@ -225,6 +225,45 @@ async function main() {
     JSON.stringify(impossible.body).slice(0, 160)
   );
 
+  // Every other way the search can say no.
+  //
+  // Three refusals exist and only one of them was ever checked. Two of the
+  // three cannot be reached from the booking screen at all -- an exam that is
+  // not bookable online is shown but cannot be chosen, and an exam that is not
+  // on this centre's list can only arrive from a stale request -- so if they
+  // are not checked here they are not checked anywhere, and the sentences the
+  // interface has for them are decoration.
+  const byPhone = north.body.exams.find((exam) => exam.bookable === false);
+  expect(
+    'the centre offers something that is not bookable online',
+    Boolean(byPhone),
+    'none found: the list is filtered, or the demonstration no longer has one'
+  );
+
+  const refused = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: [byPhone.id], category: 'private' },
+  });
+  expect(
+    'and asking for it is refused by name, not by an empty list',
+    refused.body.ok === false &&
+      refused.body.reason === 'not_bookable_online' &&
+      (refused.body.exams ?? []).some((exam) => exam.id === byPhone.id),
+    JSON.stringify(refused.body).slice(0, 160)
+  );
+
+  const stale = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: [999999], category: 'private' },
+  });
+  expect(
+    'an exam this centre has never heard of is its own refusal',
+    stale.body.ok === false && stale.body.reason === 'unknown_exam',
+    JSON.stringify(stale.body).slice(0, 160)
+  );
+
   const mornings = await call('/api/centre/search', {
     method: 'POST',
     centre: 'northgate',

@@ -161,11 +161,28 @@ const CATEGORIES = [
               />
               <div class="list">
                 @for (exam of visible(); track exam.id) {
-                  <label class="choice">
-                    <input type="checkbox" [checked]="isChosen(exam)" (change)="flip(exam)" />
+                  <!-- The ones that cannot be booked online are here, and are
+                       not selectable. Leaving them out of the list made it a
+                       lie in the direction that wastes an afternoon: somebody
+                       looking for a CT with contrast concluded this centre does
+                       not do it, when what is true is that a doctor has to
+                       approve the dose and it is booked by telephone. -->
+                  <label class="choice" [class.by-phone]="!exam.bookable">
+                    <input
+                      type="checkbox"
+                      [checked]="isChosen(exam)"
+                      [disabled]="!exam.bookable"
+                      (change)="flip(exam)"
+                    />
                     <span>
                       {{ exam.name }}
                       <small>{{ exam.modality }} · {{ exam.minutes }} min · {{ money(exam.price_cents) }}</small>
+                      @if (!exam.bookable) {
+                        <small class="ring">
+                          Not bookable online. {{ exam.notes }} Ring the centre and they will
+                          arrange it.
+                        </small>
+                      }
                     </span>
                   </label>
                 }
@@ -508,6 +525,9 @@ export class BookComponent {
   }
 
   flip(exam: Exam): void {
+    // A disabled checkbox cannot be clicked, and a keyboard, a script or a
+    // browser extension can still get here. The list is not the rule.
+    if (!exam.bookable) return;
     this.answer.set(null);
     this.chosen.set(
       this.isChosen(exam)
