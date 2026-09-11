@@ -199,6 +199,48 @@ try {
   );
 
   // ----------------------------------------------------------------------
+  // Asked before something that cannot be taken back.
+  //
+  // Cancelling was one click. A cancelled appointment is a time handed back to
+  // whoever asks next, and there is no button that returns it -- so it is the
+  // kind of thing to be asked about, and the question names what it is about
+  // rather than saying "are you sure" over a row that is now behind a backdrop.
+  console.log('\nBefore something that cannot be undone');
+
+  // Back to the centre the booking is at: the section above left the desk
+  // looking at the other one, on purpose.
+  await switchCentre(page, 'northgate');
+  await page.waitForTimeout(1200);
+
+  const before = await page.locator('tbody tr').count();
+  await page.locator('tr', { hasText: reference }).getByRole('button', { name: 'Cancel' }).click({ force: true });
+  await page.waitForTimeout(700);
+
+  const asking = page.locator('app-are-you-sure dialog[open]');
+  expect('cancelling asks first', (await asking.count()) === 1);
+  expect(
+    'and the question names the appointment it is about',
+    ((await asking.textContent()) ?? '').includes(reference)
+  );
+  expect(
+    'and the safe answer is not the one that does it',
+    (await asking.getByRole('button', { name: 'Keep it' }).count()) === 1
+  );
+
+  await asking.getByRole('button', { name: 'Keep it' }).click({ force: true });
+  await page.waitForTimeout(700);
+  expect('keeping it keeps it', (await page.locator('tbody tr').count()) === before);
+
+  await page.locator('tr', { hasText: reference }).getByRole('button', { name: 'Cancel' }).click({ force: true });
+  await page.waitForTimeout(700);
+  await asking.getByRole('button', { name: 'Cancel the appointment' }).click({ force: true });
+  await page.waitForTimeout(1600);
+  expect(
+    'and agreeing to it does it',
+    (await page.locator('tr', { hasText: reference }).count()) === 0
+  );
+
+  // ----------------------------------------------------------------------
   // Finding a booking without knowing which day it is on.
   //
   // The desk shows one day, and said nothing about being one day, so a booking

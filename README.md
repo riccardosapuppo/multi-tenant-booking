@@ -226,6 +226,23 @@ looking at.
   <img src="docs/phone-results.png" alt="The results dialog on a phone" width="290" />
 </p>
 
+Anything that cannot be taken back is asked about first, in the application's
+own voice rather than the browser's: cancelling an appointment, at the desk and
+in a patient's own list, and removing a centre from the console, which used to
+be the grey box `confirm` puts in the corner of the screen. The question names
+what it is about -- the patient and the reference, or the centre and its slug --
+because by then the row is behind a backdrop. And the buttons say the verb:
+"Cancel the appointment" against "Keep it", since a dialog about cancelling
+something cannot have a button called Cancel.
+
+Cancelling marks the booking rather than deleting it, which is right, and the
+desk's day did not know that: a cancelled appointment stayed on the list as
+though somebody were still coming, and the button looked as though it had done
+nothing. The day shows who is coming; the patient's own list keeps theirs,
+marked, because "it is not there" and "you cancelled it" are different answers;
+and Find keeps them too, because "what happened to WCY-HXX" is the question a
+desk actually asks.
+
 The desk shows **one day**, and it now says so, because it did not. A booking
 made for next Thursday looked like a booking that was never made: the table is
 every appointment at the centre on the day chosen above it, whoever booked it,

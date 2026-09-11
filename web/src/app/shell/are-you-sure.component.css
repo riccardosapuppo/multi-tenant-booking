@@ -1,0 +1,81 @@
+dialog {
+  border: none;
+  padding: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  width: min(26rem, calc(100vw - 2rem));
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.28);
+}
+
+dialog::backdrop {
+  background: rgb(12 18 24 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.sheet {
+  padding: 1.4rem 1.5rem 1.3rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+}
+
+p {
+  margin: 0 0 1.3rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.choice {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.keep,
+.go {
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.keep {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.keep:hover {
+  background: var(--hover);
+}
+
+/* The one that cannot be taken back is the one that looks like it. */
+.go {
+  border: none;
+  background: var(--bad);
+  color: #fff;
+  font-weight: 620;
+}
+
+.go:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.go:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.keep:focus-visible,
+.go:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

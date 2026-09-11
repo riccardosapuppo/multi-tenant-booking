@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { HeldComponent } from '../shell/held.component';
+import { AreYouSureComponent } from '../shell/are-you-sure.component';
 
 import { ApiService, Centre } from '../shell/api.service';
 
@@ -20,7 +21,7 @@ import { ApiService, Centre } from '../shell/api.service';
 @Component({
   selector: 'app-console',
   standalone: true,
-  imports: [FormsModule, HeldComponent],
+  imports: [FormsModule, HeldComponent, AreYouSureComponent],
   template: `
     <!-- Somebody may have arrived here from the middle of a booking, by signing
          in as the one account that cannot finish one. The appointment is kept
@@ -97,7 +98,7 @@ import { ApiService, Centre } from '../shell/api.service';
                     <button type="button" class="quiet" (click)="toggle(centre)">
                       {{ centre.active ? 'Suspend' : 'Resume' }}
                     </button>
-                    <button type="button" class="danger" (click)="remove(centre)">Remove</button>
+                    <button type="button" class="danger" (click)="askRemove(centre)">Remove</button>
                   </div>
                 </td>
               </tr>
@@ -106,6 +107,16 @@ import { ApiService, Centre } from '../shell/api.service';
         </table>
       </div>
     }
+    <app-are-you-sure
+      [open]="removing() !== null"
+      [working]="working()"
+      title="Remove this centre?"
+      [detail]="aboutToRemove()"
+      confirmLabel="Remove the centre"
+      keepLabel="Leave it"
+      (confirmed)="remove()"
+      (dismissed)="removing.set(null)"
+    />
   `,
 })
 export class ConsoleComponent {
@@ -176,17 +187,46 @@ export class ConsoleComponent {
     });
   }
 
-  remove(centre: Centre): void {
-    // Everything in it goes, and there is nothing behind this. The API asks
-    // for the slug again in the body; this asks the person in front of it.
-    const sure = confirm(
-      `Remove ${centre.name}? Its database and every booking in it are deleted, and this cannot be undone.`
-    );
-    if (!sure) return;
+  /**
+   * Everything in it goes, and there is nothing behind this.
+   *
+   * It used to be the browser's own `confirm`: a grey box in a corner with a
+   * title nobody chose and two buttons saying OK and Cancel. The API asks for
+   * the slug again in the body; this asks the person in front of it, in the
+   * application's own voice and with the verb on the button.
+   */
+  readonly removing = signal<Centre | null>(null);
+  readonly working = signal(false);
 
+  readonly aboutToRemove = computed(() => {
+    const centre = this.removing();
+    if (!centre) return '';
+    return (
+      `${centre.name} (${centre.slug}). Its database and every booking in it are ` +
+      'deleted. Nothing here undoes that.'
+    );
+  });
+
+  askRemove(centre: Centre): void {
+    this.removing.set(centre);
+  }
+
+  remove(): void {
+    const centre = this.removing();
+    if (!centre) return;
+
+    this.working.set(true);
     this.api.removeCentre(centre.slug).subscribe({
-      next: () => this.load(),
-      error: () => this.problem.set('That centre could not be removed.'),
+      next: () => {
+        this.working.set(false);
+        this.removing.set(null);
+        this.load();
+      },
+      error: () => {
+        this.working.set(false);
+        this.removing.set(null);
+        this.problem.set('That centre could not be removed.');
+      },
     });
   }
 

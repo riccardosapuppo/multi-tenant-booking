@@ -1,8 +1,9 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
 import { clock, longDate, today } from '../shell/dates';
+import { AreYouSureComponent } from '../shell/are-you-sure.component';
 
 /**
  * The desk: one day, one centre, everything in it.
@@ -19,6 +20,7 @@ import { clock, longDate, today } from '../shell/dates';
 @Component({
   selector: 'app-desk',
   standalone: true,
+  imports: [AreYouSureComponent],
   template: `
     <h1>The desk</h1>
     <p class="lede">
@@ -72,7 +74,15 @@ import { clock, longDate, today } from '../shell/dates';
                 <tr>
                   <td>{{ longDate(hit.starts_at) }}</td>
                   <td class="mono">{{ clock(hit.starts_at) }}</td>
-                  <td>{{ hit.patient_name }}</td>
+                  <td>
+                    {{ hit.patient_name }}
+                    <!-- The diary shows who is coming; this shows what happened.
+                         A search that hid cancelled ones could not answer the
+                         question a desk actually asks about a reference. -->
+                    @if (hit.status === 'cancelled') {
+                      <span class="tag warn">Cancelled</span>
+                    }
+                  </td>
                   <td class="mono">{{ hit.reference }}</td>
                   <td>
                     <button type="button" class="quiet" (click)="goTo(hit.starts_at)">
@@ -132,7 +142,7 @@ import { clock, longDate, today } from '../shell/dates';
                   @if (booking.status === 'cancelled') {
                     <span class="tag bad">cancelled</span>
                   } @else {
-                    <button type="button" class="danger" (click)="cancel(booking)">Cancel</button>
+                    <button type="button" class="danger" (click)="ask(booking)">Cancel</button>
                   }
                 </td>
               </tr>
@@ -145,6 +155,16 @@ import { clock, longDate, today } from '../shell/dates';
     @if (problem()) {
       <p class="note bad" style="margin-top: 1rem">{{ problem() }}</p>
     }
+    <app-are-you-sure
+      [open]="cancelling() !== null"
+      [working]="working()"
+      title="Cancel this appointment?"
+      [detail]="askingAbout()"
+      confirmLabel="Cancel the appointment"
+      keepLabel="Keep it"
+      (confirmed)="cancel()"
+      (dismissed)="cancelling.set(null)"
+    />
   `,
 })
 export class DeskComponent {
@@ -193,10 +213,46 @@ export class DeskComponent {
     this.load();
   }
 
-  cancel(booking: Booking): void {
+  /** Asked first. A cancelled appointment is a time given back to somebody
+   *  else, and there is no button that returns it. */
+  readonly cancelling = signal<Booking | null>(null);
+  readonly working = signal(false);
+
+  ask(booking: Booking): void {
+    this.cancelling.set(booking);
+  }
+
+  /**
+   * What the question is about, named.
+   *
+   * "Are you sure?" on its own asks somebody to remember which row they
+   * pressed, and the row is behind a backdrop by then.
+   */
+  readonly askingAbout = computed(() => {
+    const held = this.cancelling();
+    if (!held) return '';
+    return (
+      `${held.patient_name}, ${held.reference}. ` +
+      'The time goes back to whoever asks for it next, and there is no button that returns it.'
+    );
+  });
+
+  cancel(): void {
+    const booking = this.cancelling();
+    if (!booking) return;
+
+    this.working.set(true);
     this.api.cancel(booking.reference).subscribe({
-      next: () => this.load(),
-      error: () => this.problem.set('That could not be cancelled.'),
+      next: () => {
+        this.working.set(false);
+        this.cancelling.set(null);
+        this.load();
+      },
+      error: () => {
+        this.working.set(false);
+        this.cancelling.set(null);
+        this.problem.set('That could not be cancelled.');
+      },
     });
   }
 

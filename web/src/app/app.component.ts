@@ -65,7 +65,24 @@ import { SessionService } from './shell/session.service';
                  keyboard and the screen reader that a menu of divs loses. -->
             @if (switchable().length > 1) {
               <label class="wordmark switchable">
-                <strong>{{ session.centreName() ?? 'Choose a centre' }}<span class="chev" aria-hidden="true">⌄</span></strong>
+                <strong>
+                  {{ session.centreName() ?? 'Choose a centre' }}
+                  <!-- Drawn rather than typed. It was the character U+2304, which
+                       every font renders at a size and weight of its own: next to
+                       a 680-weight wordmark it came out as a thin stray v sitting
+                       too high. A path is the same shape everywhere and takes its
+                       colour and thickness from the text it belongs to. -->
+                  <svg class="chev" viewBox="0 0 12 8" aria-hidden="true" focusable="false">
+                    <path
+                      d="M1.5 2 L6 6.2 L10.5 2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </strong>
                 <span class="what">Booking platform</span>
                 <select
                   [value]="session.centre() ?? ''"

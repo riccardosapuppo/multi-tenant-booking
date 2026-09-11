@@ -199,6 +199,10 @@ async function mine(tenant, userId) {
        JOIN sites s ON s.id = r.site_id
        LEFT JOIN booking_items bi ON bi.booking_id = b.id
        LEFT JOIN exams e ON e.id = bi.exam_id
+      -- Everything, cancelled ones included. A patient's own list is a
+      -- history: "it is not there any more" and "you cancelled it" are
+      -- different answers, and only the second is one. The walkthrough has
+      -- asked for this since before I tried to change it.
       WHERE b.user_id = $1
       GROUP BY b.id, r.name, s.name
       ORDER BY b.starts_at DESC`,
@@ -228,6 +232,9 @@ async function find(tenant, wanted) {
             b.starts_at, b.ends_at, b.total_cents, r.name AS room_name
        FROM bookings b
        JOIN rooms r ON r.id = b.room_id
+      -- Cancelled ones are kept here, deliberately. The desk's question is
+      -- "what happened to WCY-HXX", and "it was cancelled" is the answer; the
+      -- diary is the place that shows only who is coming.
       WHERE upper(b.reference) = upper($1)
          OR b.patient_name ILIKE '%' || $1 || '%'
       ORDER BY b.starts_at DESC
@@ -249,6 +256,12 @@ async function diary(tenant, day) {
        FROM bookings b
        JOIN rooms r ON r.id = b.room_id
       WHERE b.starts_at >= $1 AND b.starts_at < $2
+        -- A cancelled appointment is not somebody who is coming. Cancelling
+        -- marks the row rather than deleting it, which is right -- the record is
+        -- worth keeping -- and this query did not know that, so the desk went on
+        -- listing people who had rung to say they would not be there, and the
+        -- Cancel button looked as though it had done nothing.
+        AND b.status <> 'cancelled'
       ORDER BY b.starts_at, r.name`,
     [from.toISOString(), to.toISOString()]
   );

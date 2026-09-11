@@ -244,9 +244,19 @@
 }
 
 .chev {
-  font-size: 0.8em;
+  width: 0.62em;
+  height: auto;
+  flex: none;
   color: var(--top-soft);
-  transform: translateY(-0.08em);
+  /* Optically centred against the cap height rather than the line box, which is
+     what made the character version look as though it were falling off. */
+  transform: translateY(0.06em);
+  transition: color 120ms ease;
+}
+
+.switchable:hover .chev,
+.switchable:focus-within .chev {
+  color: #ffffff;
 }
 
 .switchable:hover strong {

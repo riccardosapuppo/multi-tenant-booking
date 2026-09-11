@@ -461,6 +461,59 @@ async function main() {
   expect('a patient cannot read the diary', desk.status === 403, `got ${desk.status}`);
 
   const staff = await signIn('staff@example.invalid', PASSWORD.staff);
+
+  // A cancelled appointment leaves the diary, keeps its row, and gives the time
+  // back. Three separate claims, and only the third was ever checked.
+  const toScrap = await call('/api/centre/search', {
+    method: 'POST',
+    centre: 'northgate',
+    body: { examIds: [xray.id], category: 'private' },
+  });
+  const slot = toScrap.body.days?.[0];
+
+  if (slot) {
+    const made = await call('/api/centre/bookings', {
+      method: 'POST',
+      centre: 'northgate',
+      token: staff.token,
+      body: {
+        roomId: slot.roomId,
+        startsAt: slot.times[0],
+        examIds: [xray.id],
+        patientName: 'Cancelled On Purpose',
+        category: 'private',
+      },
+    });
+    const scrapped = made.body.booking.reference;
+    const day = slot.date;
+
+    await call(`/api/centre/bookings/${scrapped}`, {
+      method: 'DELETE',
+      centre: 'northgate',
+      token: staff.token,
+    });
+
+    const diary = await call(`/api/centre/desk/diary?day=${day}`, {
+      centre: 'northgate',
+      token: staff.token,
+    });
+    expect(
+      'a cancelled appointment leaves the day it was on',
+      !(diary.body.bookings ?? []).some((one) => one.reference === scrapped)
+    );
+
+    const stillThere = await call(`/api/centre/desk/find?q=${scrapped}`, {
+      centre: 'northgate',
+      token: staff.token,
+    });
+    expect(
+      'and is still findable, saying what happened to it',
+      (stillThere.body.bookings ?? []).some(
+        (one) => one.reference === scrapped && one.status === 'cancelled'
+      )
+    );
+  }
+
   const staffAtNorth = await call('/api/centre/desk/diary', {
     centre: 'northgate',
     token: staff.token,
