@@ -324,6 +324,26 @@ try {
   }
 
   await pickATimeAsAVisitor();
+  // The interruption shows what it interrupted, and offers the way back.
+  // From the sign-in page the only ways out were to finish signing in or to
+  // leave: the held time was invisible and there was nothing to press.
+  expect('the sign-in page shows the appointment it interrupted', (await page.locator('.held').count()) === 1);
+  expect(
+    'and says when, in words rather than a timestamp',
+    !/\d{4}-\d{2}-\d{2}T/.test((await page.locator('.held-when').textContent()) ?? ''),
+    (await page.locator('.held-when').textContent()) ?? ''
+  );
+
+  await page.getByRole('link', { name: 'Back to the appointment' }).click();
+  await page.waitForTimeout(1600);
+  expect(
+    'and going back reopens it, without an account',
+    new URL(page.url()).pathname === '/book' &&
+      (await page.locator('app-confirm dialog[open]').count()) === 1
+  );
+
+  await page.getByRole('button', { name: 'I already have one' }).click({ force: true });
+  await page.waitForTimeout(1100);
   await signInAs('Staff');
   expect(
     'staff come back to the appointment rather than to the desk',

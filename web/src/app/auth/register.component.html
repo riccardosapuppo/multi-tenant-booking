@@ -17,14 +17,7 @@
       <strong>{{ session.centreName() ?? 'the centre you chose' }}</strong>.
     </p>
 
-    @if (pending.slot(); as held) {
-      <div class="held">
-        <p class="held-lead">Waiting for a name</p>
-        <p class="held-what">{{ held.examNames.join(', ') }}</p>
-        <p class="held-when">{{ held.date }} at {{ held.startsAt }} · {{ held.siteName }}</p>
-        <p class="held-note">Nothing is held. It is booked when you confirm it.</p>
-      </div>
-    }
+    <app-held />
 
     <button type="button" class="invent" (click)="fillIn()">Fill in invented details</button>
     <p class="invent-why">

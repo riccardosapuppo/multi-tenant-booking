@@ -28,40 +28,6 @@ h1 {
   color: var(--ink-soft);
 }
 
-/* The appointment that sent them here, so the form is visibly a step in
-   something rather than a wall in front of it. */
-.held {
-  padding: 0.85rem 1rem;
-  border-left: 3px solid var(--role, var(--accent));
-  background: var(--raised);
-  border-radius: 0 10px 10px 0;
-  margin-bottom: 1.3rem;
-}
-
-.held-lead {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-}
-
-.held-what {
-  margin: 0.1rem 0 0.15rem;
-  font-weight: 620;
-  font-size: 0.98rem;
-}
-
-.held-when {
-  margin: 0;
-  font-size: 0.86rem;
-  color: var(--ink-soft);
-}
-
-.held-note {
-  margin: 0.4rem 0 0;
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-}
-
 .invent {
   font: inherit;
   font-size: 0.88rem;

@@ -6,6 +6,7 @@ import { ApiService } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
 import { PendingService } from '../shell/pending';
 import { CentrePickerComponent } from '../shell/centre-picker.component';
+import { HeldComponent } from '../shell/held.component';
 
 /**
  * Making an account, which on this platform happens AT a centre.
@@ -33,7 +34,7 @@ import { CentrePickerComponent } from '../shell/centre-picker.component';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule, RouterLink, CentrePickerComponent],
+  imports: [FormsModule, RouterLink, CentrePickerComponent, HeldComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
 })

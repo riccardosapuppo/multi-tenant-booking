@@ -174,6 +174,13 @@ a patient by tax code and birth date rather than by an email address; the five
 that went were the ones a form asks in order to *compute* the tax code, and
 this one lets you type it instead.
 
+Both of those pages show the appointment they interrupted, and both offer the
+way back to it: **Back to the appointment**, which reopens the confirmation
+without an account. The sign-in page used to show nothing, so from there the
+only ways out were to finish signing in or to leave -- and somebody who wanted
+to change their mind about the time rather than about the account had nothing
+to press.
+
 Signing in halfway through is the same journey. Whoever signs in comes back to
 the appointment rather than to the work their role usually opens on -- staff
 included, and that case is the good one, because staff booking for the person

@@ -457,9 +457,19 @@ export class BookComponent {
      */
     effect(() => {
       if (this.session.restoring()) return;
-      if (this.pending.slot() && this.session.signedIn() && !this.booked()) {
-        this.confirming.set(true);
-      }
+      const held = this.pending.slot();
+      if (!held || this.booked()) return;
+
+      // Signed in or not. It used to want an account, which meant a visitor who
+      // pressed "Back to the appointment" from the sign-in page landed on an
+      // empty search with their choice still held and nowhere on screen. The
+      // confirmation already has a half for somebody with no account: it asks
+      // who they are.
+      //
+      // Only if the choice belongs to the centre being looked at. Switching
+      // centre and finding a time from the old one waiting is a booking made
+      // somewhere nobody chose.
+      if (held.centre === this.session.centre()) this.confirming.set(true);
     });
 
     // The price list belongs to the centre, so it is re-read when the centre

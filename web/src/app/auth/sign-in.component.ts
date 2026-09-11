@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ApiService } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
 import { PendingService } from '../shell/pending';
+import { HeldComponent } from '../shell/held.component';
 
 /**
  * Signing in, with the demonstration accounts on the page.
@@ -21,7 +22,7 @@ import { PendingService } from '../shell/pending';
 @Component({
   selector: 'app-sign-in',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HeldComponent],
   template: `
     <h1>Sign in</h1>
     <p class="lede">
@@ -30,6 +31,8 @@ import { PendingService } from '../shell/pending';
     </p>
 
     <div class="grid-2">
+      <app-held />
+
       <form class="card" (ngSubmit)="submit()">
         <div class="field">
           <label>
