@@ -226,6 +226,18 @@ looking at.
   <img src="docs/phone-results.png" alt="The results dialog on a phone" width="290" />
 </p>
 
+The desk shows **one day**, and it now says so, because it did not. A booking
+made for next Thursday looked like a booking that was never made: the table is
+every appointment at the centre on the day chosen above it, whoever booked it,
+and nothing on the screen said either half of that.
+
+It also answers the other question a desk is asked all day. Somebody rings and
+says a reference, or a surname, and until now the only way to find them was to
+guess dates. **Find** takes either -- a reference matched whole, because a
+fragment of one belongs to nobody, and a name matched as a fragment, because
+"she said Vale, or maybe Vail" is what people say -- and each result opens the
+day it is on.
+
 The desk, which is behind a role at that centre. The totals along the top are
 per payment category, because that is what the quotas are counted in:
 

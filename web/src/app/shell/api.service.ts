@@ -188,6 +188,13 @@ export class ApiService {
     return this.http.delete<void>(`/api/centre/bookings/${reference}`);
   }
 
+  /** A booking by reference or patient name, on any day. Staff and above. */
+  findBooking(q: string): Observable<{ bookings: any[] }> {
+    return this.http.get<{ bookings: any[] }>(
+      `/api/centre/desk/find?q=${encodeURIComponent(q)}`
+    );
+  }
+
   diary(day: string): Observable<{ day: string; bookings: Booking[]; totals: Record<string, number> }> {
     return this.http.get<{ day: string; bookings: Booking[]; totals: Record<string, number> }>(
       `/api/centre/desk/diary?day=${day}`

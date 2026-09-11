@@ -199,6 +199,47 @@ try {
   );
 
   // ----------------------------------------------------------------------
+  // Finding a booking without knowing which day it is on.
+  //
+  // The desk shows one day, and said nothing about being one day, so a booking
+  // made for next Thursday looked like a booking that was never made. That is
+  // the other question a desk is asked all day: somebody rings and says a
+  // reference, or a surname.
+  console.log('\nFinding a booking from the desk');
+
+  await page.goto(`${BASE}/desk`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1200);
+
+  expect(
+    'the desk says what it is showing',
+    ((await page.locator('.lede').textContent()) ?? '').includes('on one day')
+  );
+
+  await page.locator('input[placeholder*="reference"]').fill('Egerton');
+  await page.getByRole('button', { name: 'Find', exact: true }).click({ force: true });
+  await page.waitForTimeout(1600);
+
+  const hits = await page.getByRole('button', { name: 'Open that day' }).count();
+  expect('a patient name finds their appointments on any day', hits > 0, String(hits));
+
+  await page.getByRole('button', { name: 'Open that day' }).first().click({ force: true });
+  await page.waitForTimeout(1600);
+  expect(
+    'and opening it shows that day in the diary',
+    ((await page.locator('tbody').first().textContent()) ?? '').includes('Egerton')
+  );
+
+  // A reference is matched whole; a fragment of one belongs to nobody.
+  await page.locator('input[placeholder*="reference"]').fill('zzzz');
+  await page.getByRole('button', { name: 'Find', exact: true }).click({ force: true });
+  await page.waitForTimeout(1400);
+  expect(
+    'and nothing matching says so rather than showing the day underneath',
+    ((await page.locator('.card').first().textContent()) ?? '').includes('Nothing here matches')
+  );
+
+
+  // ----------------------------------------------------------------------
   // A visitor with no account, which is the journey most people actually make.
   //
   // Worth driving end to end rather than asserting in pieces: every step of it

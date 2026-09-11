@@ -45,6 +45,15 @@ router.get('/diary', access.signedIn(), access.atLeast('staff'), async (req, res
 });
 
 /** Rooms and their sessions, so the desk can see why a morning is closed. */
+/** A booking by its reference or the patient's name, on any day. */
+router.get('/find', access.signedIn(), access.atLeast('staff'), async (req, res, next) => {
+  try {
+    res.json({ centre: req.tenant.slug, bookings: await store.find(req.tenant, req.query.q) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/rooms', access.signedIn(), access.atLeast('staff'), async (req, res, next) => {
   try {
     const { rows } = await tenantPool(req.tenant).query(

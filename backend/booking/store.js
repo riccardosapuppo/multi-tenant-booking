@@ -208,6 +208,35 @@ async function mine(tenant, userId) {
 }
 
 /** The whole diary for a day, for the people at the desk. */
+/**
+ * Finding a booking without knowing which day it is on.
+ *
+ * A desk's day view answers "who is coming this morning". It cannot answer the
+ * other question a desk is asked all day -- somebody rings and says a reference,
+ * or a surname -- and until this route the only way was to guess dates.
+ *
+ * Reference or patient name, both case-insensitively, and a reference is
+ * matched whole because a fragment of one is not a thing anybody has. The name
+ * is a contains match, which is what "she said Vale, or maybe Vail" needs.
+ */
+async function find(tenant, wanted) {
+  const asked = String(wanted || '').trim();
+  if (asked.length < 2) return [];
+
+  const { rows } = await tenantPool(tenant).query(
+    `SELECT b.id, b.reference, b.patient_name, b.category, b.status,
+            b.starts_at, b.ends_at, b.total_cents, r.name AS room_name
+       FROM bookings b
+       JOIN rooms r ON r.id = b.room_id
+      WHERE upper(b.reference) = upper($1)
+         OR b.patient_name ILIKE '%' || $1 || '%'
+      ORDER BY b.starts_at DESC
+      LIMIT 50`,
+    [asked]
+  );
+  return rows;
+}
+
 async function diary(tenant, day) {
   const from = new Date(day);
   from.setHours(0, 0, 0, 0);
@@ -252,6 +281,7 @@ async function cancel(tenant, { reference: ref, userId = null }) {
 }
 
 module.exports = {
+  find,
   sites,
   exams,
   roomsFor,

@@ -2,7 +2,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 
 import { ApiService, Booking } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
-import { clock, today } from '../shell/dates';
+import { clock, longDate, today } from '../shell/dates';
 
 /**
  * The desk: one day, one centre, everything in it.
@@ -22,9 +22,70 @@ import { clock, today } from '../shell/dates';
   template: `
     <h1>The desk</h1>
     <p class="lede">
-      <strong>{{ session.centre() }}</strong>, and only this centre. You are
+      Every appointment at <strong>{{ session.centreName() }}</strong> on one day, whoever
+      booked it — online, or here at the desk. This centre and no other: you are
       <span class="tag ok">{{ session.roleHere() }}</span> here.
     </p>
+
+    <!-- The other question a desk is asked all day.
+         The diary answers "who is coming this morning". It cannot answer
+         "somebody is on the telephone saying WCY-HXX", and until this box the
+         only way was to guess dates -- which is how a booking made for next
+         Thursday looks like a booking that was never made. -->
+    <div class="card" style="margin-bottom: 1rem">
+           it Angular binds a custom event of that name which nothing ever
+      <!-- The DOM submit event, not ngSubmit: that one needs FormsModule, and
+           without it Angular binds a custom event of that name which nothing
+           ever fires. The button worked, silently, on nothing. -->
+      <form class="spread" (submit)="find($event)">
+        <label class="row" style="flex: 1; min-width: 0">
+          <span class="muted">Find</span>
+          <input
+            style="flex: 1; min-width: 0"
+            placeholder="A reference, or a patient's name — any day"
+            [value]="wanted()"
+            (input)="typed($event)"
+          />
+        </label>
+        <button type="submit" class="quiet" [disabled]="wanted().trim().length < 2">Find</button>
+      </form>
+
+      @if (found() !== null) {
+        @if (found()!.length === 0) {
+          <p class="muted" style="margin: 0.7rem 0 0">
+            Nothing here matches “{{ searched() }}”. A reference is matched whole; a name
+            can be a fragment.
+          </p>
+        } @else {
+          <table style="margin-top: 0.7rem">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Patient</th>
+                <th>Reference</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (hit of found(); track hit.reference) {
+                <tr>
+                  <td>{{ longDate(hit.starts_at) }}</td>
+                  <td class="mono">{{ clock(hit.starts_at) }}</td>
+                  <td>{{ hit.patient_name }}</td>
+                  <td class="mono">{{ hit.reference }}</td>
+                  <td>
+                    <button type="button" class="quiet" (click)="goTo(hit.starts_at)">
+                      Open that day
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </div>
 
     <div class="card" style="margin-bottom: 1rem">
       <div class="spread">
@@ -34,6 +95,7 @@ import { clock, today } from '../shell/dates';
         </label>
 
         <div class="row">
+          <span class="muted">Booked this day, by who pays:</span>
           @for (entry of counted(); track entry[0]) {
             <span class="tag" [class.ok]="entry[1] > 0">{{ label(entry[0]) }}: {{ entry[1] }}</span>
           }
@@ -143,4 +205,37 @@ export class DeskComponent {
   }
 
   readonly clock = clock;
+  readonly longDate = longDate;
+
+  /** What is being looked for, what was looked for, and what came back. */
+  readonly wanted = signal('');
+  readonly searched = signal('');
+  readonly found = signal<any[] | null>(null);
+
+  typed(event: Event): void {
+    this.wanted.set((event.target as HTMLInputElement).value);
+    // A box that still shows last search's answers while somebody types the
+    // next question is a box that answers the wrong one.
+    if (this.found() !== null) this.found.set(null);
+  }
+
+  find(event?: Event): void {
+    event?.preventDefault();
+    const asking = this.wanted().trim();
+    if (asking.length < 2) return;
+
+    this.searched.set(asking);
+    this.api.findBooking(asking).subscribe({
+      next: (answer) => this.found.set(answer.bookings),
+      error: () => this.found.set([]),
+    });
+  }
+
+  /** From a result to the day it is on, which is the diary this screen shows. */
+  goTo(startsAt: string): void {
+    this.day.set(new Date(startsAt).toISOString().slice(0, 10));
+    this.found.set(null);
+    this.wanted.set('');
+    this.load();
+  }
 }
