@@ -30,6 +30,10 @@ export interface Account {
   id: number;
   email: string;
   name: string;
+  /** What registering asked for, so a page can show it back. */
+  phone?: string | null;
+  bornOn?: string | null;
+  taxCode?: string | null;
 }
 
 const TOKEN_KEY = 'booking.token';

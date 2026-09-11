@@ -237,6 +237,12 @@ try {
     'and says so in those words',
     ((await asked.locator('.who h2').textContent()) ?? '').includes('needs a name')
   );
+  // Said before the click, not after it. Somebody trying this has no account
+  // and no reason to invent one; without the line the two buttons are a wall.
+  expect(
+    'and says the accounts are furnished, before asking them to choose',
+    ((await asked.textContent()) ?? '').includes('ready-made')
+  );
 
   await asked.getByRole('button', { name: 'Create an account' }).click({ force: true });
   await page.waitForTimeout(1300);
@@ -495,6 +501,50 @@ try {
       )
     );
   }
+
+  // ----------------------------------------------------------------------
+  // The account's own details.
+  //
+  // A booking system where the name on your appointments cannot be corrected
+  // is a booking system with a spelling mistake in it forever.
+  console.log('\nChanging your own details');
+
+  await page.goto(`${BASE}/sign-in`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  await signInAs('Patient');
+
+  await page.locator('a.name').click();
+  await page.waitForTimeout(1200);
+  expect('the name in the header leads to your details', new URL(page.url()).pathname === '/profile');
+  expect(
+    'the email is shown and is not a field',
+    (await page.locator('.fixed output').count()) === 1 &&
+      (await page.locator('input[name=email]').count()) === 0
+  );
+
+  const wasCalled = await page.locator('input[name=name]').inputValue();
+  await page.locator('input[name=name]').fill(`${wasCalled} (edited)`);
+  await page.getByRole('button', { name: /Save details/ }).click({ force: true });
+  await page.waitForTimeout(1800);
+  expect(
+    'saving says so and the header follows at once',
+    (await page.locator('.done').count()) === 1 &&
+      (await page.locator('a.name').textContent())?.includes('(edited)')
+  );
+
+  // Put it back, so the rest of the demonstration is the demonstration.
+  await page.locator('input[name=name]').fill(wasCalled);
+  await page.getByRole('button', { name: /Save details/ }).click({ force: true });
+  await page.waitForTimeout(1500);
+
+  await page.locator('input[name=current]').fill('not-the-password');
+  await page.locator('input[name=wanted]').fill('long-enough-1234');
+  await page.getByRole('button', { name: /Change password/ }).click({ force: true });
+  await page.waitForTimeout(1800);
+  expect(
+    'the wrong current password is refused, and says which one was wrong',
+    ((await page.locator('.problem').textContent()) ?? '').includes('current password')
+  );
 
   console.log('');
   if (failures > 0) {

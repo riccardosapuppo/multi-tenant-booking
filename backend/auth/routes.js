@@ -144,6 +144,111 @@ router.post('/users', resolveTenant(), async (req, res, next) => {
   }
 });
 
+/**
+ * Changing the details somebody gave when they registered.
+ *
+ * Name, telephone, date of birth and tax code. Not the email address: it is
+ * what this account signs in with and it is unique across the platform, so
+ * changing it is a different job with a different failure -- somebody else
+ * already has it -- and pretending otherwise inside a "save" button is how an
+ * account ends up unreachable.
+ *
+ * Every field is optional in the body and absent means unchanged, so a form
+ * that sends what it knows cannot blank what it does not.
+ */
+router.patch('/me', access.signedIn(), async (req, res, next) => {
+  const given = req.body ?? {};
+  const change = {};
+
+  if (given.name !== undefined) {
+    const name = String(given.name).trim();
+    if (name.length < 2) return res.status(400).json({ error: 'a name is needed' });
+    change.full_name = name;
+  }
+
+  if (given.phone !== undefined) change.phone = String(given.phone).trim() || null;
+  if (given.taxCode !== undefined) change.tax_code = String(given.taxCode).trim().toUpperCase() || null;
+
+  if (given.bornOn !== undefined) {
+    const bornOn = String(given.bornOn).trim();
+    if (bornOn && !/^\d{4}-\d{2}-\d{2}$/.test(bornOn)) {
+      return res.status(400).json({ error: 'the date of birth is not a date' });
+    }
+    change.born_on = bornOn || null;
+  }
+
+  const columns = Object.keys(change);
+  if (columns.length === 0) return res.status(400).json({ error: 'nothing to change' });
+
+  try {
+    const sets = columns.map((column, at) => `${column} = $${at + 2}`).join(', ');
+    const { rows } = await sharedPool().query(
+      `UPDATE users SET ${sets} WHERE id = $1
+       RETURNING id, email, full_name, phone, born_on, tax_code`,
+      [req.user.id, ...columns.map((column) => change[column])]
+    );
+
+    const saved = rows[0];
+    return res.json({
+      user: {
+        id: saved.id,
+        email: saved.email,
+        name: saved.full_name,
+        phone: saved.phone,
+        bornOn: saved.born_on ? saved.born_on.toISOString().slice(0, 10) : null,
+        taxCode: saved.tax_code,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+/**
+ * Changing the password, which asks for the current one first.
+ *
+ * Not ceremony: a signed-in session on a shared machine is not proof of who is
+ * typing, and the whole point of the old password is that it is the one thing
+ * somebody who walked up to an unlocked screen does not have.
+ *
+ * Every other session this account has is then ended. Sessions here are rows,
+ * so that is a DELETE rather than a wish -- and it is the reason to change a
+ * password at all: somebody else knew it.
+ */
+router.post('/me/password', access.signedIn(), async (req, res, next) => {
+  const current = String(req.body?.current ?? '');
+  const wanted = String(req.body?.next ?? '');
+
+  if (wanted.length < 8) {
+    return res.status(400).json({ error: 'the new password needs at least 8 characters' });
+  }
+  if (wanted === current) {
+    return res.status(400).json({ error: 'that is the password it already has' });
+  }
+
+  try {
+    const pool = sharedPool();
+    const { rows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    const held = rows[0];
+    if (!held || !(await passwords.verify(current, held.password_hash))) {
+      return res.status(401).json({ error: 'the current password is not right' });
+    }
+
+    await pool.query('UPDATE users SET password_hash = $2 WHERE id = $1', [
+      req.user.id,
+      await passwords.hash(wanted),
+    ]);
+
+    const header = req.get('authorization') || '';
+    const mine = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+    await pool.query('DELETE FROM sessions WHERE user_id = $1 AND token <> $2', [req.user.id, mine]);
+
+    return res.status(204).end();
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.delete('/session', async (req, res, next) => {
   const header = req.get('authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;

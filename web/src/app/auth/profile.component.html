@@ -1,0 +1,114 @@
+<section class="page">
+  <header class="head">
+    <h1>Your details</h1>
+    <p>
+      One account across the platform. What you may do is decided at each centre, and
+      changing anything here changes it everywhere.
+    </p>
+  </header>
+
+  <div class="cards">
+    <form class="card" (ngSubmit)="save()">
+      <h2>Who you are</h2>
+
+      <label class="fixed">
+        <span>Email</span>
+        <output>{{ session.account()?.email }}</output>
+        <small>What you sign in with. Ring the centre to change it.</small>
+      </label>
+
+      <label>
+        <span>Full name</span>
+        <input name="name" autocomplete="name" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+        <small>This is the name that goes on an appointment you book for yourself.</small>
+      </label>
+
+      <div class="pair">
+        <label>
+          <span>Date of birth</span>
+          <input name="bornOn" type="date" [ngModel]="bornOn()" (ngModelChange)="bornOn.set($event)" />
+        </label>
+        <label>
+          <span>Tax code</span>
+          <input name="taxCode" autocomplete="off" [ngModel]="taxCode()" (ngModelChange)="taxCode.set($event)" />
+        </label>
+      </div>
+
+      <label>
+        <span>Phone</span>
+        <input name="phone" type="tel" autocomplete="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+        <small>Rung when a scanner breaks and the day has to be rearranged.</small>
+      </label>
+
+      @if (problem()) {
+        <p class="problem">{{ problem() }}</p>
+      }
+      @if (saved()) {
+        <p class="done">Saved.</p>
+      }
+
+      <button type="submit" [disabled]="!ready()">
+        {{ saving() ? 'Saving…' : 'Save details' }}
+      </button>
+    </form>
+
+    <div class="side">
+      <form class="card" (ngSubmit)="changePassword()">
+        <h2>Password</h2>
+        <p class="why">
+          The current one is asked for because a signed-in screen is not proof of who is
+          typing. Changing it ends every other session this account has.
+        </p>
+
+        <label>
+          <span>Current password</span>
+          <input
+            name="current"
+            type="password"
+            autocomplete="current-password"
+            [ngModel]="current()"
+            (ngModelChange)="current.set($event)"
+          />
+        </label>
+
+        <label>
+          <span>New password</span>
+          <input
+            name="wanted"
+            type="password"
+            autocomplete="new-password"
+            [ngModel]="wanted()"
+            (ngModelChange)="wanted.set($event)"
+          />
+          <small>At least eight characters.</small>
+        </label>
+
+        @if (passwordProblem()) {
+          <p class="problem">{{ passwordProblem() }}</p>
+        }
+        @if (changed()) {
+          <p class="done">Changed. Other sessions have been ended.</p>
+        }
+
+        <button type="submit" [disabled]="!canChange()">
+          {{ changing() ? 'Changing…' : 'Change password' }}
+        </button>
+      </form>
+
+      <div class="card">
+        <h2>Where you are known</h2>
+        <p class="why">
+          A role belongs to a centre, not to an account. These are yours.
+        </p>
+        @for (grant of roles(); track grant.slug) {
+          <div class="grant">
+            <strong>{{ grant.name ?? grant.slug }}</strong>
+            <span>{{ grant.role.replace('_', ' ') }}</span>
+          </div>
+        } @empty {
+          <p class="why">None yet. Booking at a centre starts one.</p>
+        }
+      </div>
+    </div>
+  </div>
+</section>

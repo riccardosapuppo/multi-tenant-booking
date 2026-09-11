@@ -144,6 +144,21 @@
   outline-offset: 3px;
 }
 
+.name:hover {
+  background: var(--top-hover);
+  color: var(--top-ink);
+}
+
+.name.here {
+  background: color-mix(in srgb, #ffffff 17%, transparent);
+  color: #ffffff;
+}
+
+.name:focus-visible {
+  outline: 2px solid var(--top-ink);
+  outline-offset: 2px;
+}
+
 /* Signed out, "Book" is a link among links and the current one should say so. */
 .guest.here {
   background: color-mix(in srgb, #ffffff 17%, transparent);
@@ -347,6 +362,9 @@ nav a.here {
 }
 
 .name {
+  text-decoration: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
   color: var(--top-soft);
   max-width: 11rem;
   overflow: hidden;

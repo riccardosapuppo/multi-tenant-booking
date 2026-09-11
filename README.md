@@ -184,6 +184,11 @@ only ways out were to finish signing in or to leave -- and somebody who wanted
 to change their mind about the time rather than about the account had nothing
 to press.
 
+The confirmation also says, before asking anybody to choose, that both ways in
+are furnished: signing in offers four ready-made accounts and registering fills
+itself in. Said afterwards it is on the page somebody has already decided not
+to visit.
+
 Signing in halfway through is the same journey. Whoever signs in comes back to
 the appointment rather than to the work their role usually opens on -- staff
 included, and that case is the good one, because staff booking for the person
@@ -219,6 +224,21 @@ what patients are shown and leaves it here; and the price is what somebody is
 quoted before they choose a time.
 
 ![The price list: exam, minutes, price and whether it is offered online, each row saved on its own](docs/prices.png)
+
+### Your own details
+
+The name in the header is a link to them. Name, date of birth, tax code and
+telephone, saved on their own; and the password, changed on its own, because
+correcting a telephone number and changing a password fail in different ways
+and usually mean different things. The current password is asked for -- a
+signed-in screen is not proof of who is typing -- and changing it ends every
+other session the account has, which is a DELETE rather than a wish, because
+sessions here are rows.
+
+The email address is shown and is not a field. It is what the account signs in
+with and it is unique across the platform, so changing it is a different job
+with a different failure, and hiding that inside a Save button is how an
+account becomes unreachable.
 
 ## The five minutes worth spending
 

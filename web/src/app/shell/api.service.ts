@@ -110,6 +110,21 @@ export class ApiService {
     return this.http.post('/api/auth/users', body);
   }
 
+  /** The details somebody gave when they registered. Absent means unchanged. */
+  updateMe(change: {
+    name?: string;
+    phone?: string;
+    bornOn?: string;
+    taxCode?: string;
+  }): Observable<{ user: Account }> {
+    return this.http.patch<{ user: Account }>('/api/auth/me', change);
+  }
+
+  /** Asks for the current password, and ends every other session. */
+  changePassword(current: string, next: string): Observable<void> {
+    return this.http.post<void>('/api/auth/me/password', { current, next });
+  }
+
   /** The centres to choose between, for somebody who has no account yet. */
   openCentres(): Observable<{ centres: { slug: string; name: string }[] }> {
     return this.http.get<{ centres: { slug: string; name: string }[] }>('/api/centres');

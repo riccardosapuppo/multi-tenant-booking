@@ -75,6 +75,13 @@ export const ROUTES: Routes = [
     loadComponent: () => import('./book/book.component').then((m) => m.BookComponent),
   },
   {
+    // Not behind a centre: an account exists across the platform, and whoever
+    // runs it has no centre and still has a name and a password.
+    path: 'profile',
+    canActivate: [signedIn],
+    loadComponent: () => import('./auth/profile.component').then((m) => m.ProfileComponent),
+  },
+  {
     path: 'bookings',
     canActivate: [signedIn, atACentre],
     loadComponent: () => import('./book/my-bookings.component').then((m) => m.MyBookingsComponent),

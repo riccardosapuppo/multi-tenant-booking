@@ -120,7 +120,11 @@ import { SessionService } from './shell/session.service';
 
             <div class="who">
               <span class="badge" [attr.data-badge-role]="role()">{{ roleName() }}</span>
-              <span class="name">{{ session.account()?.name }}</span>
+              <!-- The name is where somebody looks for themselves, so it is
+                   the way to their own details rather than a label. -->
+              <a class="name" routerLink="/profile" routerLinkActive="here">{{
+                session.account()?.name
+              }}</a>
               <button type="button" class="quiet" (click)="signOut()">Sign out</button>
             </div>
           } @else {

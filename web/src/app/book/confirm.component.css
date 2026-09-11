@@ -309,6 +309,13 @@ dialog::backdrop {
   color: var(--ink);
 }
 
+.ready-made {
+  margin: 0.7rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
 .go:focus-visible,
 .back:focus-visible,
 .shut:focus-visible {

@@ -47,7 +47,7 @@ async function whoIs(token) {
   if (typeof token !== 'string' || token.length < 20) return null;
 
   const { rows } = await sharedPool().query(
-    `SELECT u.id, u.email, u.full_name
+    `SELECT u.id, u.email, u.full_name, u.phone, u.born_on, u.tax_code
        FROM sessions s
        JOIN users u ON u.id = s.user_id
       WHERE s.token = $1 AND s.expires_at > now()`,
@@ -55,7 +55,19 @@ async function whoIs(token) {
   );
 
   if (rows.length === 0) return null;
-  return { id: rows[0].id, email: rows[0].email, name: rows[0].full_name };
+  const found = rows[0];
+  return {
+    id: found.id,
+    email: found.email,
+    name: found.full_name,
+    // The details somebody gave when they registered, so a page can show them
+    // back rather than ask again. A date comes out of the driver as a Date and
+    // goes to the browser as the day it is, without a timezone deciding it is
+    // the one before.
+    phone: found.phone,
+    bornOn: found.born_on ? found.born_on.toISOString().slice(0, 10) : null,
+    taxCode: found.tax_code,
+  };
 }
 
 async function close(token) {

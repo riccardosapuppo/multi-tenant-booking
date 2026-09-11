@@ -93,6 +93,15 @@
           <button type="button" class="back" (click)="wantsSignIn.emit()">
             I already have one
           </button>
+
+          <!-- Said before the click rather than after it. Somebody trying this
+               out has no account and no reason to make one up; without this
+               line the two buttons look like a wall, and the way past it is on
+               the next page where they have already decided not to go. -->
+          <p class="ready-made">
+            Nobody has an account here. Both ways in are furnished: signing in offers four
+            ready-made accounts, and registering fills itself in.
+          </p>
         }
       </div>
     </div>
