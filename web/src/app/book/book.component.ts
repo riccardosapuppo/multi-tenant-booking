@@ -283,6 +283,8 @@ const CATEGORIES = [
       [open]="showing()"
       [answer]="answer()"
       [title]="chosenNames()"
+      [howMany]="chosen().length"
+      [atOneSite]="siteId() !== null"
       [terms]="terms()"
       (closed)="showing.set(false)"
       (chosen)="choose($event.day, $event.time)"
@@ -644,6 +646,7 @@ export class BookComponent {
 
     this.booking.set(true);
     this.problem.set(null);
+    const began = Date.now();
 
     this.api
       .book({
@@ -655,10 +658,21 @@ export class BookComponent {
       })
       .subscribe({
         next: (made) => {
-          this.booking.set(false);
-          this.confirming.set(false);
-          this.pending.drop();
-          this.booked.set(made.booking);
+          // Held for a moment before the screen changes.
+          //
+          // Not to pretend the work took longer: the work is a row in a diary
+          // and on a machine next to you it takes tens of milliseconds. It is
+          // that a state which appears and vanishes inside one frame is a
+          // flicker rather than a state, and somebody who pressed a button
+          // deserves to see that the button took it. Half a second is the
+          // shortest thing the eye reads as having happened.
+          const rest = Math.max(0, 550 - (Date.now() - began));
+          setTimeout(() => {
+            this.booking.set(false);
+            this.confirming.set(false);
+            this.pending.drop();
+            this.booked.set(made.booking);
+          }, rest);
         },
         error: (error) => {
           this.booking.set(false);

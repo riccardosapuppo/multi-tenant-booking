@@ -88,17 +88,22 @@ and the boundary between these four people is a permission rather than four
 deployments.
 
 <p>
-  <img src="docs/role-patient.png" alt="Patient: a green rule, Book and My bookings" width="760" /><br />
-  <img src="docs/role-staff.png" alt="Staff: a blue rule, Desk and Book for a patient" width="760" /><br />
-  <img src="docs/role-admin.png" alt="Centre administrator: an amber rule, Desk, Price list and Book for a patient" width="760" /><br />
-  <img src="docs/role-platform.png" alt="Platform administrator: a violet rule, Centres alone, and no centre selector" width="760" />
+  <img src="docs/role-patient.png" alt="Patient: a dark green band, Book and My bookings" width="760" /><br />
+  <img src="docs/role-staff.png" alt="Staff: a dark blue band, Desk and Book for a patient" width="760" /><br />
+  <img src="docs/role-admin.png" alt="Centre administrator: a warm brown band, Desk, Price list and Book for a patient" width="760" /><br />
+  <img src="docs/role-platform.png" alt="Platform administrator: an indigo band, Centres alone, and no centre to switch to" width="760" />
 </p>
 
 Read from the top: the patient books and looks at their own appointments; staff
 open on today's diary and book on somebody's behalf; the centre's administrator
 has the price list as well; and whoever runs the platform has centres and
-*nothing else* — no centre selector, because they belong to none, and the word
-under the mark says **no centre**.
+*nothing else* — nothing to switch between, because they belong to no centre,
+and where the others carry a centre's name the header carries only the
+platform's.
+
+Somebody who has not signed in is a state too, and the bar says so: **Guest**,
+next to the two ways in. It used to say nothing at all, which reads as a page
+that has not finished loading.
 
 ## What it looks like
 

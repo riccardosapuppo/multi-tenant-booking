@@ -42,7 +42,17 @@ import { clock, dayNumber, dayOfWeek, monthOf, yearOf } from '../shell/dates';
             <div class="nothing">
               <p class="big">
                 @if (found.reason === 'no_room_does_all') {
-                  These cannot be done in one visit here.
+                  <!-- One exam and several are the same refusal from the engine
+                       and two different sentences to a person: "these cannot be
+                       done in one visit" is nonsense about a single exam, and
+                       it is what this said, because the only case anybody had
+                       tried was two. A site with one machine in it made the
+                       other case reachable. -->
+                  @if (howMany() === 1) {
+                    {{ atOneSite() ? 'That site does not do this one.' : 'No room here does this one.' }}
+                  } @else {
+                    These cannot be done in one visit here.
+                  }
                 } @else if (found.reason === 'not_bookable_online') {
                   {{ (found.exams ?? [])[0]?.name }} is not bookable online.
                 } @else {
@@ -51,8 +61,16 @@ import { clock, dayNumber, dayOfWeek, monthOf, yearOf } from '../shell/dates';
               </p>
               <p class="why">
                 @if (found.reason === 'no_room_does_all') {
-                  No single room performs all of them, and one appointment happens in one
-                  room. Book them separately, or choose a different site.
+                  @if (howMany() === 1) {
+                    {{
+                      atOneSite()
+                        ? 'The machine for it is in another building of this centre. Choose any site, or pick the one that has it.'
+                        : 'No room at this centre has the machine for it.'
+                    }}
+                  } @else {
+                    No single room performs all of them, and one appointment happens in one
+                    room. Book them separately, or choose a different site.
+                  }
                 } @else if (found.reason === 'not_bookable_online') {
                   It needs a doctor to approve it first. Ring the centre and they will
                   arrange it.
@@ -129,6 +147,10 @@ export class ResultsComponent {
   readonly title = input('');
   readonly terms = input('');
   readonly open = input(false);
+  /** How many exams were asked for: one refusal, two sentences. */
+  readonly howMany = input(0);
+  /** Whether the search was narrowed to one building. */
+  readonly atOneSite = input(false);
 
   readonly closed = output<void>();
   readonly chosen = output<{ day: SearchDay; time: string }>();

@@ -67,7 +67,12 @@
           </p>
 
           <button type="button" class="go" [disabled]="!ready()" (click)="go()">
-            {{ working() ? 'Booking…' : 'Confirm booking' }}
+            @if (working()) {
+              <span class="spin" aria-hidden="true"></span>
+              Booking…
+            } @else {
+              Confirm booking
+            }
           </button>
           <button type="button" class="back" (click)="shut()">Pick another time</button>
         } @else {

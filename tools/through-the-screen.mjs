@@ -184,7 +184,7 @@ try {
 
   if ((await row.count()) > 0) {
     const text = (await row.first().textContent()) ?? '';
-    expect('with the patient’s name', /Demo Patient/.test(text), text.trim());
+    expect('with the patient’s name', /Sam Okonjo/.test(text), text.trim());
     expect('with the time', /\d{2}:\d{2}/.test(text), text.trim());
     expect('with the room', /room/i.test(text), text.trim());
     expect('and the payment category', /Private|Exempt|Health|Insured/i.test(text), text.trim());
@@ -286,6 +286,41 @@ try {
   await page.waitForTimeout(3000);
 
   expect('and the account is made, not refused', (await page.locator('.problem').count()) === 0);
+
+  // ----------------------------------------------------------------------
+  // One exam and several are the same refusal and two different sentences.
+  //
+  // The engine answers `no_room_does_all` whether you asked for one thing or
+  // three, and the screen said "these cannot be done in one visit here" to
+  // both -- which about a single exam is nonsense. Nobody had seen it because
+  // every site in the demonstration used to have more than one machine in it.
+  console.log('\nAsking for something a building cannot do');
+
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    localStorage.setItem('booking.centre', 'northgate');
+  });
+  await page.goto(`${BASE}/book`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1400);
+
+  await page.locator('.panel .head').first().click();
+  await page.waitForTimeout(400);
+  await page.locator('label', { hasText: 'Northgate Point' }).click();
+  await page.waitForTimeout(500);
+  await page.getByText('Choose an exam').click();
+  await page.waitForTimeout(400);
+  await page.locator('label', { hasText: 'MRI knee' }).first().click();
+  await page.waitForTimeout(300);
+  await page.locator('button.search').click({ force: true });
+  await page.waitForTimeout(2500);
+
+  const refused = (await page.locator('dialog[open] .big').textContent()) ?? '';
+  expect('one exam is refused in the singular', !/these|all of them/i.test(refused), refused.trim());
+  expect(
+    'and says where the machine is',
+    ((await page.locator('dialog[open] .why').textContent()) ?? '').includes('another building')
+  );
 
   // ----------------------------------------------------------------------
   // The centre you were looking at yesterday, which is not there today.

@@ -123,6 +123,10 @@ import { SessionService } from './shell/session.service';
                  rather than presenting a wall. Both ways in, and the one that
                  costs nothing first. -->
             <div class="who">
+              <!-- Signed in, the bar says who you are. Signed out it said
+                   nothing, which reads as a page that has not loaded rather
+                   than as a state somebody is in. -->
+              <span class="badge" data-badge-role="guest">Guest</span>
               <a class="guest" routerLink="/sign-in">Sign in</a>
               <a class="joinup" routerLink="/register">Create account</a>
             </div>
@@ -191,6 +195,25 @@ export class AppComponent {
         // which is where this started. Nothing to report to anybody.
         error: () => {},
       });
+    });
+
+    /**
+     * The name of the centre a visitor came back to.
+     *
+     * Which centre is remembered in the browser; what it is called was not,
+     * because a visitor has no grants to read it from and the name was held in
+     * memory from the moment they picked it. So they chose Northgate
+     * Diagnostics, closed the tab, came back, and the header said `northgate` —
+     * the slug, which is a database key wearing the identity of a business.
+     *
+     * The public list has the answer and is already being fetched. This waits
+     * for it and fills in the blank.
+     */
+    effect(() => {
+      const slug = this.session.centre();
+      if (!slug || this.session.signedIn()) return;
+      const said = this.openCentres().find((one) => one.slug === slug)?.name;
+      if (said && said !== this.session.visitingName()) this.session.visitingName.set(said);
     });
   }
 

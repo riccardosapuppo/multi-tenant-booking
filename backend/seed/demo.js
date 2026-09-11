@@ -3,7 +3,7 @@
  *
  * Run on an empty database by `npm start`. Everything in it is made up, and
  * conspicuously so — the centres are named after nothing that exists, the
- * patients are `Demo Patient`, and the passwords are printed in the README.
+ * patients have invented names, and the passwords are printed in the README.
  * That is the point: this is a demonstration of a mechanism, and a
  * demonstration carrying data that could be mistaken for real is one nobody
  * should run.
@@ -274,12 +274,19 @@ async function fillDiary(tenant, userId, plan) {
   const { rows: rooms } = await pool.query('SELECT id, code, modality FROM rooms ORDER BY id');
   const { rows: exams } = await pool.query('SELECT id, code, minutes, price_cents FROM exams');
 
+  // Invented people, like everything else here, but people.
+  //
+  // A day's diary reading "Demo Patient, Second Demo Patient, Third Demo
+  // Patient" is a screenshot of a fixture rather than of a morning at a
+  // diagnostic centre -- and the desk screen exists to show what a morning
+  // looks like. None of these is anybody: they are common surnames and given
+  // names put together, which is what a name generator is.
   const names = [
-    'Demo Patient',
-    'Second Demo Patient',
-    'Third Demo Patient',
-    'Fourth Demo Patient',
-    'Fifth Demo Patient',
+    'Hannah Vale',
+    'Tom Egerton',
+    'Priya Nandi',
+    'Gareth Wilkes',
+    'Marta Oliveira',
   ];
 
   let made = 0;
@@ -396,19 +403,19 @@ async function run() {
     }
   }
 
-  const platform = await person('platform@example.invalid', 'Demo Platform Admin', PASSWORD.platformAdmin);
+  const platform = await person('platform@example.invalid', 'Iris Bhatt', PASSWORD.platformAdmin);
   await grant(platform, 'platform_admin');
 
-  const admin = await person('admin@example.invalid', 'Demo Centre Admin', PASSWORD.centreAdmin);
+  const admin = await person('admin@example.invalid', 'Ruth Callaghan', PASSWORD.centreAdmin);
   await grant(admin, 'centre_admin', 'northgate');
 
-  const staff = await person('staff@example.invalid', 'Demo Staff', PASSWORD.staff);
+  const staff = await person('staff@example.invalid', 'Owen Pryce', PASSWORD.staff);
   await grant(staff, 'staff', 'northgate');
   // Staff at one centre and nothing at the other, which is the account that
   // makes the permission boundary visible instead of described.
   await grant(staff, 'staff', 'riverside');
 
-  const patient = await person('patient@example.invalid', 'Demo Patient', PASSWORD.patient);
+  const patient = await person('patient@example.invalid', 'Sam Okonjo', PASSWORD.patient);
   await grant(patient, 'patient', 'northgate');
   await grant(patient, 'patient', 'riverside');
 

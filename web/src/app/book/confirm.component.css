@@ -260,6 +260,36 @@ dialog::backdrop {
   filter: brightness(1.06);
 }
 
+/* Something is happening, and it is happening to a room in a diary rather than
+   to a form. A button that changes its word and nothing else reads as a button
+   that did not take the click. */
+.spin {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.45rem;
+  vertical-align: -0.08em;
+  border: 2px solid color-mix(in srgb, #ffffff 45%, transparent);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 620ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Still a state, still visible, just not turning. */
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+    border-top-color: color-mix(in srgb, #ffffff 45%, transparent);
+    border-right-color: #ffffff;
+  }
+}
+
 .go:disabled {
   opacity: 0.5;
   cursor: not-allowed;

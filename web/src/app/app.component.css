@@ -195,6 +195,21 @@
   opacity: 0;
   cursor: pointer;
   font: inherit;
+
+  /* The control is invisible; the list it opens is not.
+   *
+   * That list is drawn by the browser, and it takes its colours from these
+   * properties rather than from the page -- so with the band's light text
+   * inherited, every option that was not under the pointer was white on white.
+   * Only the highlighted one could be read, which is a menu you have to scrub
+   * to use. */
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.switchable select option {
+  color: var(--ink);
+  background: var(--surface);
 }
 
 .chev {

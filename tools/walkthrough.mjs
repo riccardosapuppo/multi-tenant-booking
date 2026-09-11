@@ -289,7 +289,7 @@ async function main() {
       roomId: room.id,
       startsAt: free.body.times[0],
       examIds: [northKnee.id],
-      patientName: 'Demo Patient',
+      patientName: 'Sam Okonjo',
       category: 'private',
     },
   });
