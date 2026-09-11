@@ -201,9 +201,16 @@ Signing in halfway through is the same journey. Whoever signs in comes back to
 the appointment rather than to the work their role usually opens on -- staff
 included, and that case is the good one, because staff booking for the person
 in front of them is exactly what the confirmation asks for. The exception is
-whoever runs the platform: they belong to no centre and cannot hold an
-appointment, so they go to the console and the choice is dropped rather than
-left to surface later.
+whoever runs the platform. They belong to no centre, so they cannot finish it --
+the API would refuse the booking, and a screen that let them try would be a
+demonstration lying about its own boundary. What it does instead is say so at
+both ends: the row on the sign-in page is marked before the account is chosen,
+and the console shows the appointment still waiting with the reason under it.
+
+The appointment is kept, and signing out gives it back. Throwing it away
+because the wrong account signed in would make a mistake at a sign-in page cost
+somebody their 11:00 on Tuesday, quietly, which is a thing software should not
+do.
 
 Nothing is held while that happens, and the confirmation says so rather than
 implying otherwise: a hold with an expiry is a real feature, not a

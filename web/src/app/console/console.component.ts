@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { HeldComponent } from '../shell/held.component';
+
 import { ApiService, Centre } from '../shell/api.service';
 
 /**
@@ -18,8 +20,14 @@ import { ApiService, Centre } from '../shell/api.service';
 @Component({
   selector: 'app-console',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HeldComponent],
   template: `
+    <!-- Somebody may have arrived here from the middle of a booking, by signing
+         in as the one account that cannot finish one. The appointment is kept
+         and shown rather than dropped: the wrong account at the sign-in page
+         should not cost somebody their 11:00 on Tuesday. -->
+    <app-held />
+
     <h1>Centres</h1>
     <p class="lede">
       Every centre on the platform, each with a database of its own. Creating one

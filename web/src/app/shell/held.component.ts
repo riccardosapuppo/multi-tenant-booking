@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { PendingService } from './pending';
+import { SessionService } from './session.service';
 import { clock, longDate } from './dates';
 
 /**
@@ -29,8 +30,20 @@ import { clock, longDate } from './dates';
         <p class="held-lead">Waiting for a name</p>
         <p class="held-what">{{ held.examNames.join(', ') }}</p>
         <p class="held-when">{{ longDate(held.startsAt) }} at {{ clock(held.startsAt) }} · {{ held.siteName }}</p>
-        <p class="held-note">Nothing is held. It is booked when you confirm it.</p>
-        <a class="held-back" routerLink="/book">Back to the appointment</a>
+        @if (canFinish()) {
+          <p class="held-note">Nothing is held. It is booked when you confirm it.</p>
+          <a class="held-back" routerLink="/book">Back to the appointment</a>
+        } @else {
+          <!-- Signed in as somebody who cannot book it. Said rather than solved:
+               a booking belongs to a centre, and this account has no role at
+               one -- whoever runs the platform has none anywhere, which is the
+               boundary this whole demonstration is about. -->
+          <p class="held-note cannot">
+            This account cannot book it. A booking belongs to a centre, and this one has
+            no role there.
+          </p>
+          <a class="held-back" routerLink="/sign-in">Sign in as somebody else</a>
+        }
       </div>
     }
   `,
@@ -38,6 +51,22 @@ import { clock, longDate } from './dates';
 })
 export class HeldComponent {
   readonly pending = inject(PendingService);
+  private readonly session = inject(SessionService);
+
+  /**
+   * Whether whoever is here could finish this booking.
+   *
+   * A visitor can: the confirmation asks who they are. Somebody signed in can
+   * only if they hold a role at the centre the time was picked at, and whoever
+   * runs the platform holds one nowhere.
+   */
+  readonly canFinish = computed(() => {
+    const held = this.pending.slot();
+    if (!held) return false;
+    if (!this.session.signedIn()) return true;
+    if (this.session.platformAdmin()) return false;
+    return this.session.grants().some((grant) => grant.slug === held.centre);
+  });
 
   // The timestamp is what the engine speaks; a person reading a summary of
   // their own appointment should not be shown it. This said "2026-09-15 at

@@ -23,6 +23,16 @@ import { HeldComponent } from '../shell/held.component';
   selector: 'app-sign-in',
   standalone: true,
   imports: [FormsModule, HeldComponent],
+  styles: `
+    /* Not \`.warn\`: the global sheet has that as a modifier of tags and
+       notes, so a bare one inherits nothing and the line looked like the rest
+       of the row. */
+    .cannot-finish {
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      color: var(--warn);
+    }
+  `,
   template: `
     <h1>Sign in</h1>
     <p class="lede">
@@ -75,6 +85,13 @@ import { HeldComponent } from '../shell/held.component';
             <div>
               <div><strong>{{ account.what }}</strong></div>
               <div class="muted">{{ account.sees }}</div>
+              <!-- Said here, where the choice is made, rather than after it.
+                   The account that creates centres belongs to none, so it is
+                   the one account on this page that cannot finish a booking --
+                   which is the boundary this page exists to show. -->
+              @if (pending.slot() && account.booksNowhere) {
+                <div class="cannot-finish">Cannot finish the appointment you have waiting.</div>
+              }
             </div>
             <button type="button" class="quiet" (click)="use(account)">Use</button>
           </div>
@@ -87,7 +104,7 @@ export class SignInComponent {
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
-  private readonly pending = inject(PendingService);
+  readonly pending = inject(PendingService);
 
   email = '';
   password = '';
@@ -116,13 +133,14 @@ export class SignInComponent {
     },
     {
       what: 'Platform administrator',
+      booksNowhere: true,
       email: 'platform@example.invalid',
       password: 'platform-admin-demo-1234',
       sees: 'Creates centres — and cannot read a single patient booking',
     },
   ];
 
-  use(account: { email: string; password: string }): void {
+  use(account: { email: string; password: string; booksNowhere?: boolean }): void {
     this.email = account.email;
     this.password = account.password;
     this.problem.set(null);
@@ -180,8 +198,10 @@ export class SignInComponent {
       if (may) return '/book';
     }
 
-    if (held) this.pending.drop();
-
+    // The appointment is kept, not dropped. An account that cannot finish it is
+    // still somebody's choice of 11:00 on Tuesday, and throwing it away because
+    // the wrong account signed in is the application deciding that a mistake at
+    // the sign-in page costs you the booking. Signing out gives it back.
     if (this.session.platformAdmin()) return '/console';
     return this.session.canUseDesk() ? '/desk' : '/book';
   }

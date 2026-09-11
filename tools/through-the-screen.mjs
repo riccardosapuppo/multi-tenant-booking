@@ -412,11 +412,28 @@ try {
   await signOut(page);
 
   await pickATimeAsAVisitor();
-  await signInAs('Platform administrator');
+  // Warned on the row, before the account is chosen rather than after.
   expect(
-    'whoever runs the platform cannot finish it and is not pretended at',
+    'the sign-in page marks the account that cannot finish it',
+    (await page.locator('.cannot-finish').count()) === 1
+  );
+  await signInAs('Platform administrator');
+  // The one account that cannot finish a booking, and what it is told.
+  //
+  // It used to be told nothing: the appointment was dropped and the console
+  // opened, so signing in with the wrong account cost somebody their 11:00 on
+  // Tuesday and never mentioned it. The appointment is kept now -- signing out
+  // gives it back -- and both ends of the journey say why this one cannot
+  // finish it, which is the permission boundary this project is about.
+  expect(
+    'whoever runs the platform goes to the console, not to a booking they cannot make',
     new URL(page.url()).pathname === '/console' &&
       (await page.locator('app-confirm dialog[open]').count()) === 0
+  );
+  expect('and the appointment is kept, not thrown away', (await page.locator('.held').count()) === 1);
+  expect(
+    'and the console says why this account cannot finish it',
+    ((await page.locator('.held-note.cannot').textContent()) ?? '').includes('no role there')
   );
   await signOut(page);
 
