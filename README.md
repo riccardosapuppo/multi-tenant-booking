@@ -118,6 +118,41 @@ me room to change my mind".
 
 ![The results dialog: day cards with the date, price, site and available times](docs/booking.png)
 
+Picking a time does not book it. It used to -- one click, no summary, no way
+back, and the name on the booking was a constant in the source called
+`Demo Patient`, so the screen could not tell you whose appointment it had just
+made. What a time opens now is the appointment itself: the day and the hour
+large, the site, the room and the machine, and the price beside the button that
+agrees to it.
+
+![The confirmation: the appointment on the left, who it is for and the price on the right](docs/confirm.png)
+
+The right-hand half changes with who is asking. A patient sees their own name.
+Somebody at the desk is booking for the person standing in front of them, so
+the name is a field and it is required -- that is where `Demo Patient` came
+from. And a visitor with no account sees what an account is for.
+
+### Booking without an account, and then having one
+
+A booking screen that asks for a password before it will show you a single free
+slot is a screen most people close. So the search is open: choose a centre,
+choose an exam, see the times. The account is needed at the end, for the reason
+an account is ever needed here -- an appointment belongs to somebody, and the
+centre has to be able to ring them when a scanner breaks.
+
+So the last step sends a visitor to register, with the time they picked kept
+beside the form, and brings them back to it afterwards with one button left to
+press. The registration asks for six things, and says next to each why it wants
+it. The original asked for eleven, because an Italian health service identifies
+a patient by tax code and birth date rather than by an email address; the five
+that went were the ones a form asks in order to *compute* the tax code, and
+this one lets you type it instead.
+
+Nothing is held while that happens, and the confirmation says so rather than
+implying otherwise: a hold with an expiry is a real feature, not a
+demonstration of one. If the time goes in the meantime the booking comes back
+409 and the screen says it has just been taken, and shows what is left.
+
 And on a phone, where the header becomes two rows and drops the account name:
 somebody knows who they signed in as; what they need is which centre they are
 looking at.

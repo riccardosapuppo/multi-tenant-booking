@@ -103,6 +103,15 @@ try {
   await page.waitForTimeout(1200);
   await page.screenshot({ path: path.join(DOCS, 'booking.png') });
   say('booking.png');
+
+  // ------------------------------------------ and what it asks before booking
+  await page.locator('.times button').first().click({ force: true });
+  await page.waitForTimeout(900);
+  await page.locator('app-confirm dialog[open]').screenshot({
+    path: path.join(DOCS, 'confirm.png'),
+  });
+  say('confirm.png');
+
   await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
   await leave(page);
