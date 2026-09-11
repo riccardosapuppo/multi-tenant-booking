@@ -69,7 +69,7 @@ const CATEGORIES = [
     @if (!session.centre()) {
       <!-- The first question on a platform serving several centres, and until
            now nobody without an account was allowed to be asked it. -->
-      <app-centre-picker />
+<app-centre-picker [heading]="askHeading()" [blurb]="askWhy()" />
     } @else {
     <div class="notice">
       Online booking at <strong>{{ session.centreName() }}</strong> is for the exams listed
@@ -338,6 +338,22 @@ export class BookComponent {
   /** Whether the confirmation is on screen. */
   readonly confirming = signal(false);
 
+  /** Why the centre question is being asked a second time, if it is. */
+  readonly forgotten = signal<string | null>(null);
+
+  // Composed here rather than in the template. An apostrophe inside a template
+  // expression inside an attribute is three levels of quoting and the compiler
+  // is right to refuse it; a sentence is not a thing to assemble in markup.
+  readonly askHeading = computed(() =>
+    this.forgotten() ? 'Choose another centre' : 'Which centre?'
+  );
+
+  readonly askWhy = computed(
+    () =>
+      this.forgotten() ??
+      "Prices, opening hours and what can be booked online are each centre's own."
+  );
+
   readonly siteName = computed(() => {
     const id = this.siteId();
     if (id === null) return 'Any';
@@ -442,10 +458,37 @@ export class BookComponent {
     });
   }
 
+  /**
+   * The centre's exams and sites, and what to do when the centre is gone.
+   *
+   * Which centre you are looking at is remembered in the browser, and a centre
+   * is a row: it can be suspended, and on this demonstration it can be deleted
+   * from the console while you are looking at it. Coming back the next day to a
+   * centre that no longer takes bookings left the screen saying it could not
+   * read the list of exams -- true, unhelpful, and with no way out except
+   * knowing that the name in the header is a switcher.
+   *
+   * 403 and 404 are that case and nothing else: the centre is suspended, or it
+   * is not there. So the remembered centre is forgotten and the screen asks the
+   * question it asks anybody who has not chosen one, with a line saying why it
+   * is asking again. Any other failure is the API being down, which is not
+   * solved by choosing a different centre.
+   */
   private load(): void {
     this.api.exams().subscribe({
       next: (answer) => this.exams.set(answer.exams),
-      error: () => this.problem.set('Could not read this centre’s list of exams.'),
+      error: (wrong) => {
+        if (wrong.status === 403 || wrong.status === 404) {
+          this.forgotten.set(
+            wrong.status === 403
+              ? 'The centre you were looking at is not taking bookings at the moment.'
+              : 'The centre you were looking at is no longer on the platform.'
+          );
+          this.session.lookAt(null);
+          return;
+        }
+        this.problem.set('Could not read this centre’s list of exams.');
+      },
     });
     this.api.sites().subscribe({ next: (answer) => this.sites.set(answer.sites) });
   }

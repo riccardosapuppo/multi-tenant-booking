@@ -287,6 +287,40 @@ try {
 
   expect('and the account is made, not refused', (await page.locator('.problem').count()) === 0);
 
+  // ----------------------------------------------------------------------
+  // The centre you were looking at yesterday, which is not there today.
+  //
+  // Which centre you are in is remembered in the browser, and a centre is a
+  // row: the console can suspend it or delete it while somebody has it open.
+  // Coming back to one of those left the screen saying it could not read the
+  // list of exams -- true, unhelpful, and no way out unless you already knew
+  // the name in the header is a switcher.
+  console.log('\nComing back to a centre that has gone');
+
+  for (const [slug, what] of [
+    ['lakeside', 'suspended'],
+    ['no-such-centre-here', 'deleted'],
+  ]) {
+    await page.evaluate((held) => {
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem('booking.centre', held);
+    }, slug);
+    await page.goto(`${BASE}/book`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1500);
+
+    expect(
+      `a ${what} centre asks the question again instead of failing`,
+      (await page.locator('.pick-centre').count()) === 1
+    );
+    expect(
+      `and says why it is asking (${what})`,
+      ((await page.locator('.pick-centre p').first().textContent()) ?? '').includes(
+        'centre you were looking at'
+      )
+    );
+  }
+
   console.log('');
   if (failures > 0) {
     console.log(`${failures} checks failed.`);
