@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { ApiService } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
+import { PendingService } from '../shell/pending';
 
 /**
  * Signing in, with the demonstration accounts on the page.
@@ -83,6 +84,7 @@ export class SignInComponent {
   private readonly api = inject(ApiService);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly pending = inject(PendingService);
 
   email = '';
   password = '';
@@ -154,6 +156,29 @@ export class SignInComponent {
    * way the difference between them shows.
    */
   private landing(): string {
+    // Unless they were in the middle of booking.
+    //
+    // Somebody who picked a time as a visitor and pressed "I already have one"
+    // came here to finish that, not to be shown the work their role usually
+    // does. Signing in as staff sent them to the desk with the appointment
+    // abandoned behind them, and the desk case is the one worth keeping: staff
+    // booking for the person in front of them is exactly what the confirmation
+    // asks for, and it asks for the name because of it.
+    //
+    // Two accounts cannot finish it and are sent to their own work with the
+    // choice dropped rather than left to surface later: whoever runs the
+    // platform, who belongs to no centre, and anybody with no role at the
+    // centre the time was picked at -- their booking would be refused by the
+    // API, which is a worse way to find out.
+    const held = this.pending.slot();
+
+    if (held && !this.session.platformAdmin()) {
+      const may = this.session.grants().some((grant) => grant.slug === held.centre);
+      if (may) return '/book';
+    }
+
+    if (held) this.pending.drop();
+
     if (this.session.platformAdmin()) return '/console';
     return this.session.canUseDesk() ? '/desk' : '/book';
   }

@@ -288,6 +288,72 @@ try {
   expect('and the account is made, not refused', (await page.locator('.problem').count()) === 0);
 
   // ----------------------------------------------------------------------
+  // Signing in from the middle of a booking, as somebody who is not a patient.
+  //
+  // Signing in sends each role to its own work, which is most of what makes
+  // four accounts look like four applications. It is the wrong rule exactly
+  // once: somebody who picked a time as a visitor and pressed "I already have
+  // one" came to finish that. Staff were sent to the desk with the appointment
+  // abandoned behind them -- and the desk case is the good one, because staff
+  // booking for the person in front of them is what the confirmation asks for.
+  console.log('\nSigning in halfway through a booking');
+
+  async function pickATimeAsAVisitor() {
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await page.goto(`${BASE}/book`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(900);
+    await page.locator('.choices button', { hasText: 'Northgate' }).click();
+    await page.waitForTimeout(1400);
+    await page.locator('label', { hasText: 'MRI knee' }).first().click();
+    await page.locator('button.search').click({ force: true });
+    await page.waitForTimeout(3000);
+    await page.locator('.times button').first().click({ force: true });
+    await page.waitForTimeout(800);
+    await page.getByRole('button', { name: 'I already have one' }).click({ force: true });
+    await page.waitForTimeout(1100);
+  }
+
+  async function signInAs(what) {
+    await page.locator('.spread', { hasText: what }).first().getByRole('button', { name: 'Use' }).click();
+    await page.waitForTimeout(300);
+    await page.getByRole('button', { name: /^Sign in$/ }).click({ force: true });
+    await page.waitForTimeout(2800);
+  }
+
+  await pickATimeAsAVisitor();
+  await signInAs('Staff');
+  expect(
+    'staff come back to the appointment rather than to the desk',
+    new URL(page.url()).pathname === '/book' &&
+      (await page.locator('app-confirm dialog[open]').count()) === 1
+  );
+  expect(
+    'and are asked whose appointment it is',
+    ((await page.locator('app-confirm dialog[open] .who h2').textContent()) ?? '').includes(
+      'Who is this for'
+    )
+  );
+
+  // Escape first: a <dialog> opened with showModal() makes the rest of the page
+  // inert, so the sign-out button in the header never receives the click --
+  // `force: true` dispatches it and the browser is right to ignore it.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  await signOut(page);
+
+  await pickATimeAsAVisitor();
+  await signInAs('Platform administrator');
+  expect(
+    'whoever runs the platform cannot finish it and is not pretended at',
+    new URL(page.url()).pathname === '/console' &&
+      (await page.locator('app-confirm dialog[open]').count()) === 0
+  );
+  await signOut(page);
+
+  // ----------------------------------------------------------------------
   // One exam and several are the same refusal and two different sentences.
   //
   // The engine answers `no_room_does_all` whether you asked for one thing or

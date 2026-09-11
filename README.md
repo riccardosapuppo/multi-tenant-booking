@@ -174,6 +174,14 @@ a patient by tax code and birth date rather than by an email address; the five
 that went were the ones a form asks in order to *compute* the tax code, and
 this one lets you type it instead.
 
+Signing in halfway through is the same journey. Whoever signs in comes back to
+the appointment rather than to the work their role usually opens on -- staff
+included, and that case is the good one, because staff booking for the person
+in front of them is exactly what the confirmation asks for. The exception is
+whoever runs the platform: they belong to no centre and cannot hold an
+appointment, so they go to the console and the choice is dropped rather than
+left to surface later.
+
 Nothing is held while that happens, and the confirmation says so rather than
 implying otherwise: a hold with an expiry is a real feature, not a
 demonstration of one. If the time goes in the meantime the booking comes back
