@@ -50,14 +50,34 @@ import { SessionService } from './shell/session.service';
       <header class="top">
         <div class="bar">
           <div class="brand">
-            <app-logo [size]="30" />
-            <span class="wordmark">
-              <strong>Booking</strong>
-              <!-- The centre, in the identity. On a platform where the same code
-                   serves several of them, which one you are in is not a setting
-                   tucked away in a menu. -->
-              <span>{{ session.centre() ?? 'no centre' }}</span>
-            </span>
+            <app-logo [size]="32" />
+
+            <!-- The centre is the headline and the product is the subscript,
+                 which is the inversion this whole platform argues for: the
+                 thing you are looking at is a place, and the software is what
+                 it has in common with three others. Switching is the name
+                 itself -- a real <select> laid over it, so it keeps the
+                 keyboard and the screen reader that a menu of divs loses. -->
+            @if (centres().length > 1) {
+              <label class="wordmark switchable">
+                <strong>{{ session.centreName() ?? 'Choose a centre' }}<span class="chev" aria-hidden="true">⌄</span></strong>
+                <span class="what">Booking platform</span>
+                <select
+                  [value]="session.centre() ?? ''"
+                  (change)="switch($event)"
+                  aria-label="Centre"
+                >
+                  @for (grant of centres(); track grant.slug) {
+                    <option [value]="grant.slug">{{ grant.name ?? grant.slug }}</option>
+                  }
+                </select>
+              </label>
+            } @else {
+              <span class="wordmark">
+                <strong>{{ session.centreName() ?? 'Booking' }}</strong>
+                <span class="what">Booking platform</span>
+              </span>
+            }
           </div>
 
           @if (session.signedIn()) {
@@ -88,19 +108,16 @@ import { SessionService } from './shell/session.service';
 
             <div class="who">
               <span class="badge" [attr.data-badge-role]="role()">{{ roleName() }}</span>
-
-              @if (centres().length > 0) {
-                <label class="centre">
-                  <span class="label">Centre</span>
-                  <select [value]="session.centre() ?? ''" (change)="switch($event)">
-                    @for (grant of centres(); track grant.slug) {
-                      <option [value]="grant.slug">{{ grant.slug }}</option>
-                    }
-                  </select>
-                </label>
-              }
               <span class="name">{{ session.account()?.name }}</span>
               <button type="button" class="quiet" (click)="signOut()">Sign out</button>
+            </div>
+          } @else {
+            <!-- A visitor may search without an account, so the header says so
+                 rather than presenting a wall. Both ways in, and the one that
+                 costs nothing first. -->
+            <div class="who">
+              <a class="guest" routerLink="/sign-in">Sign in</a>
+              <a class="joinup" routerLink="/register">Create account</a>
             </div>
           }
         </div>

@@ -92,10 +92,17 @@
 }
 
 .top {
-  background: var(--surface);
-  /* The rule under the header IS the role. One pixel of the line is the
-     product's own; the two above it are whoever is signed in. */
-  border-bottom: 2px solid var(--role);
+  /* The role is not a two-pixel line any more: it tints the whole band.
+     Signing in as somebody else should be visible from across the room, and a
+     line at the bottom of the header is the one thing nobody looks at. The
+     tint is 7% -- enough to read as a colour, light enough that the text on it
+     is still text on a page. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--role) 9%, var(--surface)),
+    color-mix(in srgb, var(--role) 4%, var(--surface))
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--role) 28%, var(--line));
 }
 
 .bar {
@@ -116,30 +123,74 @@
   color: inherit;
 }
 
+/* The identity, inverted.
+ *
+ * The centre's name is the large line and the product is the small one. On a
+ * platform where the same code serves four centres, the useful question is
+ * which building you are looking at -- and the previous header answered it in
+ * a tracked-out uppercase slug under the word "Booking", which is the smallest
+ * and least readable place on the bar.
+ */
 .wordmark {
   display: flex;
   flex-direction: column;
-  /* 1.05 stacked the two lines on top of each other: the descenders of
-     "Booking" landed in the centre name below it. Enough room for both, and
-     no more. */
-  line-height: 1.25;
-  gap: 0.05rem;
+  line-height: 1.2;
+  gap: 0.02rem;
+  min-width: 0;
 }
 
 .wordmark strong {
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  font-size: 1.02rem;
-  line-height: 1.15;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 680;
+  letter-spacing: -0.03em;
+  font-size: 1.18rem;
+  line-height: 1.18;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* The centre, under the product name. This is a multi-tenant platform and
-   which tenant you are in is not a detail — it belongs in the identity. */
-.wordmark span {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.wordmark .what {
+  font-size: 0.72rem;
   color: var(--ink-faint);
+  letter-spacing: 0.005em;
+}
+
+/* Switching centre IS the name. The select covers the label and is invisible;
+   everything a select gives -- keyboard, screen reader, the platform's own
+   dropdown -- is still there, which is what a menu built from divs throws
+   away. */
+.switchable {
+  position: relative;
+  cursor: pointer;
+}
+
+.switchable select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.chev {
+  font-size: 0.8em;
+  color: var(--ink-faint);
+  transform: translateY(-0.08em);
+}
+
+.switchable:hover strong {
+  color: var(--role-ink);
+}
+
+.switchable:focus-within {
+  outline: 2px solid var(--role);
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
 nav {
@@ -182,16 +233,47 @@ nav a.here { background: var(--role-soft); color: var(--role-ink); font-weight: 
   gap: 0.8rem;
   font-size: 0.9rem;
   flex: none;
+  /* Pushed right on its own. It used to rely on `nav` having `margin-right:
+     auto` to do it, and a visitor with no account has no nav -- so the two
+     ways in sat against the wordmark with the rest of the bar empty. */
+  margin-left: auto;
 }
 
-.centre { display: flex; align-items: center; gap: 0.45rem; }
+/* The two ways in, for somebody who has neither. Signing in is a link and
+   creating an account is the filled one: of the two, the account is the one
+   a visitor who has got this far probably needs. */
+.guest,
+.joinup {
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 9px;
+  white-space: nowrap;
+}
 
-.centre select {
-  width: auto;
-  min-width: 12rem;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.88rem;
-  background: var(--raised);
+.guest {
+  color: var(--ink-soft);
+}
+
+.guest:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.joinup {
+  background: var(--role);
+  color: #fff;
+  font-weight: 600;
+}
+
+.joinup:hover {
+  filter: brightness(1.06);
+}
+
+.guest:focus-visible,
+.joinup:focus-visible {
+  outline: 2px solid var(--role);
+  outline-offset: 2px;
 }
 
 .name {
@@ -264,13 +346,12 @@ footer a:hover {
   .name { display: none; }
   .who button { white-space: nowrap; order: 2; }
 
-  /* Row two answers one question — where am I, and as whom — so the badge and
-     the centre share it. The word "Centre" goes: the selector is plainly a
-     centre and the row has no space for a label that says so. */
+  /* The centre is in the identity now, so row two carries only the badge --
+     and the identity keeps its size, because on a phone the centre you are in
+     is the single most useful thing on the bar. */
   .badge { order: 3; }
-  .centre { order: 3; flex: 1 1 8rem; min-width: 0; }
-  .centre .label { display: none; }
-  .centre select { flex: 1; min-width: 0; }
+  .wordmark strong { font-size: 1.08rem; }
+  .guest, .joinup { order: 2; }
 
   nav {
     order: 4;
