@@ -334,6 +334,24 @@ try {
   await page.goto(`${BASE}/sign-in`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(700);
   expect('with nothing held there is nothing to show', (await page.locator('.held').count()) === 0);
+
+  // And with nothing held there is still a way back. Signing in and registering
+  // were rooms with one door: the way back only appeared when an appointment
+  // was waiting, so somebody who pressed Sign in from the header had the
+  // browser's back button and nothing else.
+  expect('a visitor can reach the booking screen from the header', (await page.getByRole('link', { name: 'Book', exact: true }).count()) === 1);
+  await page.getByRole('link', { name: 'Book', exact: true }).click();
+  await page.waitForTimeout(1200);
+  expect('and it goes there', new URL(page.url()).pathname === '/book');
+
+  await page.goto(`${BASE}/sign-in`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  await page.locator('a.mark').click();
+  await page.waitForTimeout(1200);
+  expect('and so does the mark, which is where a mark goes', new URL(page.url()).pathname === '/book');
+
+  await page.goto(`${BASE}/sign-in`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
   expect(
     'and the empty component takes no room in the layout',
     (await page.locator('app-held').evaluate((el) => getComputedStyle(el).display)) === 'contents'

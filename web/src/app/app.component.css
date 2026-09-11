@@ -134,6 +134,22 @@
   padding: 0.7rem 1.4rem;
 }
 
+.mark {
+  display: inline-flex;
+  border-radius: 9px;
+}
+
+.mark:focus-visible {
+  outline: 2px solid var(--top-ink);
+  outline-offset: 3px;
+}
+
+/* Signed out, "Book" is a link among links and the current one should say so. */
+.guest.here {
+  background: color-mix(in srgb, #ffffff 17%, transparent);
+  color: #ffffff;
+}
+
 .brand {
   display: flex;
   align-items: center;

@@ -50,7 +50,12 @@ import { SessionService } from './shell/session.service';
       <header class="top">
         <div class="bar">
           <div class="brand">
-            <app-logo [size]="32" />
+            <!-- The mark goes home, which is where a mark goes.
+                 It was a div, so the only way off the sign-in page without
+                 signing in was the browser's back button. -->
+            <a class="mark" routerLink="/" aria-label="Booking">
+              <app-logo [size]="32" />
+            </a>
 
             <!-- The centre is the headline and the product is the subscript,
                  which is the inversion this whole platform argues for: the
@@ -127,6 +132,10 @@ import { SessionService } from './shell/session.service';
                    nothing, which reads as a page that has not loaded rather
                    than as a state somebody is in. -->
               <span class="badge" data-badge-role="guest">Guest</span>
+              <!-- The way back to the thing this application is for. Signed in,
+                   the navigation has it; signed out there was none at all, so
+                   sign-in and registration were rooms with one door. -->
+              <a class="guest" routerLink="/book" routerLinkActive="here">Book</a>
               <a class="guest" routerLink="/sign-in">Sign in</a>
               <a class="joinup" routerLink="/register">Create account</a>
             </div>

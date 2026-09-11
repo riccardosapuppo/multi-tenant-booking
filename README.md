@@ -176,7 +176,10 @@ this one lets you type it instead.
 
 Both of those pages show the appointment they interrupted, and both offer the
 way back to it: **Back to the appointment**, which reopens the confirmation
-without an account. The sign-in page used to show nothing, so from there the
+without an account. And with nothing waiting there is still a way back, which
+there was not: signed out the header had no navigation at all and the mark was
+not a link, so sign-in and registration were rooms with one door and the way
+out was the browser's back button. The sign-in page used to show nothing, so from there the
 only ways out were to finish signing in or to leave -- and somebody who wanted
 to change their mind about the time rather than about the account had nothing
 to press.
