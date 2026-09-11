@@ -250,6 +250,19 @@ marked, because "it is not there" and "you cancelled it" are different answers;
 and Find keeps them too, because "what happened to WCY-HXX" is the question a
 desk actually asks.
 
+A patient's own list is one centre's, because a booking made at one is not in
+another's database -- and it now says where the others are: "2 appointments at
+Riverside Imaging", with a button that goes there. Signing out gives up the
+chosen centre on purpose, so the next person at the same machine does not land
+in somebody else's, and signing back in lands on the first centre the account
+belongs to. Somebody who had booked at the other one met an empty list, which
+is indistinguishable from a lost booking until something says otherwise.
+
+It is the one place this application reads across centres, and it is worth
+being precise about why that is not the boundary leaking: the loop is over the
+account's own grants, asking each centre it is registered with for its own
+appointments. The platform administrator still cannot read a single one.
+
 The desk opens on **everything from today**, a page at a time, because a list
 that asks for a date before it will show anything hides most of itself. It used
 to open on today and show nothing else: an appointment made for next Thursday

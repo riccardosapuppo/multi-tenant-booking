@@ -230,6 +230,15 @@ export class ApiService {
     }>(`/api/centre/desk/bookings${tail ? `?${tail}` : ''}`);
   }
 
+  /** Where else this account has appointments, and how many. */
+  myBookingCounts(): Observable<{
+    centres: { slug: string; name: string; upcoming: number | null }[];
+  }> {
+    return this.http.get<{ centres: { slug: string; name: string; upcoming: number | null }[] }>(
+      '/api/auth/me/bookings'
+    );
+  }
+
   /** The days with appointments on them, and how many. */
   busyDays(): Observable<{ days: { day: string; booked: number }[] }> {
     return this.http.get<{ days: { day: string; booked: number }[] }>('/api/centre/desk/busy');

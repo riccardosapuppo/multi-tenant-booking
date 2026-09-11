@@ -6,6 +6,7 @@ const { sharedPool } = require('../db/pools');
 const passwords = require('./passwords');
 const sessions = require('./sessions');
 const access = require('./access');
+const mine = require('./mine');
 const { resolveTenant } = require('../tenants/resolve');
 
 const router = express.Router();
@@ -246,6 +247,21 @@ router.post('/me/password', access.signedIn(), async (req, res, next) => {
     return res.status(204).end();
   } catch (error) {
     return next(error);
+  }
+});
+
+/**
+ * Where else this account has appointments, and how many.
+ *
+ * Outside the tenant middleware on purpose: the question is about several
+ * centres at once, and asking somebody to name one before they may be told
+ * where their own appointments are is the shape of question that has no answer.
+ */
+router.get('/me/bookings', access.signedIn(), async (req, res, next) => {
+  try {
+    res.json({ centres: await mine.bookingCounts(req.grants, req.user.id) });
+  } catch (error) {
+    next(error);
   }
 });
 

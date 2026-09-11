@@ -20,9 +20,26 @@ import { AreYouSureComponent } from '../shell/are-you-sure.component';
   template: `
     <h1>My bookings</h1>
     <p class="lede">
-      At <strong>{{ session.centre() }}</strong>. Switch centres in the header and the
-      list changes: a booking made at one centre is not in the other's database.
+      At <strong>{{ session.centreName() }}</strong>. A booking made at one centre is not
+      in another's database, so this list is this centre's.
     </p>
+
+    <!-- And where the others are.
+         Signing out gives up the chosen centre on purpose, so the next person
+         at the same machine does not land in somebody else's; signing back in
+         lands on the first centre the account belongs to. Somebody who booked
+         at the other one then met an empty list, which is indistinguishable
+         from a lost booking until something says otherwise. -->
+    @for (other of elsewhere(); track other.slug) {
+      <p class="note">
+        {{ other.upcoming }}
+        {{ other.upcoming === 1 ? 'appointment' : 'appointments' }} at
+        <strong>{{ other.name }}</strong>.
+        <button type="button" class="quiet" (click)="goTo(other.slug, other.name)">
+          Look there
+        </button>
+      </p>
+    }
 
     @if (loading()) {
       <p class="muted">Reading…</p>
@@ -86,6 +103,7 @@ export class MyBookingsComponent {
   readonly session = inject(SessionService);
 
   readonly bookings = signal<Booking[]>([]);
+  readonly counts = signal<{ slug: string; name: string; upcoming: number | null }[]>([]);
   readonly loading = signal(true);
   readonly problem = signal<string | null>(null);
 
@@ -102,6 +120,14 @@ export class MyBookingsComponent {
   }
 
   private load(): void {
+    // Asked alongside the list rather than only when it is empty: knowing there
+    // are two waiting at the other centre is useful whether or not there are
+    // any here.
+    this.api.myBookingCounts().subscribe({
+      next: (answer) => this.counts.set(answer.centres),
+      error: () => this.counts.set([]),
+    });
+
     this.loading.set(true);
     this.api.myBookings().subscribe({
       next: (answer) => {
@@ -138,6 +164,16 @@ export class MyBookingsComponent {
       'The time goes back to whoever asks for it next, and there is no button that returns it.'
     );
   });
+
+  /** The account's other centres that have something waiting. */
+  readonly elsewhere = computed(() =>
+    this.counts().filter((one) => one.slug !== this.session.centre() && (one.upcoming ?? 0) > 0)
+  );
+
+  goTo(slug: string, name: string): void {
+    this.session.visitingName.set(name);
+    this.session.lookAt(slug);
+  }
 
   cancel(): void {
     const booking = this.cancelling();

@@ -163,6 +163,18 @@ try {
     (await page.locator('td', { hasText: reference }).count()) > 0
   );
 
+  // And the list says where the account's other appointments are.
+  //
+  // Signing out gives up the chosen centre on purpose, so the next person at
+  // the same machine does not land in somebody else's, and signing back in
+  // lands on the first centre the account belongs to. Somebody who booked at
+  // the other one then met an empty list, which is indistinguishable from a
+  // lost booking until something says otherwise.
+  expect(
+    'and the list says where the others are',
+    (await page.locator('.note', { hasText: 'at' }).count()) > 0
+  );
+
   // ------------------------------------------------- the other centre: not
   await switchCentre(page, 'riverside');
   await page.waitForTimeout(800);
