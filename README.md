@@ -124,6 +124,14 @@ machines are in each, next to the address. It used to say "Site: Any" and
 nothing else, which tells somebody who has just chosen a centre neither what a
 site is nor that this centre has three.
 
+A price list is what a centre offers, not a catalogue of radiology, so the two
+centres do not list the same things: Riverside has no CT scanner and prices no
+CT. They used to be seeded with the same list whatever machines they had, which
+meant Riverside sold a CT abdomen and then answered "no room at this centre has
+the machine for it" -- true, and nonsense next to a price. The engine was right
+and the data was wrong, and nothing anywhere would have said so, which is why
+the walkthrough now asks every centre to search for everything it prices.
+
 The list also shows what this centre does and will **not** book online -- here a
 CT angiography, because a doctor has to approve the contrast dose first. It used
 to be filtered out, which made the list wrong in the direction that wastes an

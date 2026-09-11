@@ -253,6 +253,35 @@ async function main() {
     JSON.stringify(refused.body).slice(0, 160)
   );
 
+  // Nothing in a price list is impossible to book where it is priced.
+  //
+  // Every centre used to be seeded with every exam whatever machines it had, so
+  // Riverside sold a CT abdomen and had no CT scanner. Choosing it answered
+  // "no room at this centre has the machine for it", which is true and reads as
+  // nonsense next to a price. The engine was right and the data was wrong, and
+  // nothing anywhere would have said so.
+  const open = await call('/api/centres');
+  for (const centre of open.body.centres) {
+    const list = await call('/api/centre/exams', { centre: centre.slug });
+    const sellable = (list.body.exams ?? []).filter((exam) => exam.bookable);
+
+    const impossible = [];
+    for (const exam of sellable) {
+      const asked = await call('/api/centre/search', {
+        method: 'POST',
+        centre: centre.slug,
+        body: { examIds: [exam.id], category: 'private' },
+      });
+      if (asked.body.reason === 'no_room_does_all') impossible.push(exam.name);
+    }
+
+    expect(
+      `everything ${centre.slug} prices, ${centre.slug} can actually do`,
+      impossible.length === 0,
+      impossible.join(', ')
+    );
+  }
+
   const stale = await call('/api/centre/search', {
     method: 'POST',
     centre: 'northgate',

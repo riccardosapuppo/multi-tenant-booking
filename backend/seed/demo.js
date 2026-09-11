@@ -98,8 +98,22 @@ async function fillCentre(tenant, shape) {
     siteIds.push(rows[0].id);
   }
 
+  // A price list is what a centre offers, not a catalogue of radiology.
+  //
+  // Every centre used to be seeded with every exam, whatever machines it had.
+  // Riverside therefore sold a CT abdomen at a price and had no CT scanner, so
+  // choosing it got "no room at this centre has the machine for it" -- true,
+  // and baffling next to a price. The engine was right and the data was wrong.
+  //
+  // So the list follows the machines. The exception is deliberate and stays:
+  // an exam the centre performs and will not book online is in the list, marked,
+  // because a patient looking for it needs to be told to ring rather than told
+  // it does not exist.
+  const hasMachine = new Set(shape.rooms.map((room) => room.modality));
+  const offered = EXAMS.filter((exam) => hasMachine.has(exam.modality));
+
   const examIds = new Map();
-  for (const exam of EXAMS) {
+  for (const exam of offered) {
     const { rows } = await pool.query(
       `INSERT INTO exams (code, name, modality, minutes, price_cents, bookable, notes)
             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
