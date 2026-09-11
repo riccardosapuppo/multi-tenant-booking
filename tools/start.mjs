@@ -67,14 +67,21 @@ function openInBrowser(url) {
         ? ['open', [url]]
         : ['xdg-open', [url]];
 
-  try {
-    // Detached and unwatched: the browser outlives this process, and a machine
-    // without a browser to open must not take the demonstration down with it.
-    spawn(command, args, { detached: true, stdio: 'ignore' }).unref();
-    return true;
-  } catch {
-    return false;
-  }
+  // Detached and unwatched: the browser outlives this process, and a machine
+  // without a browser to open must not take the demonstration down with it.
+  //
+  // The outcome arrives late, and that is the whole reason this is not a
+  // boolean any more. `spawn` does not throw when the command is missing -- it
+  // emits `error` on the next turn of the loop -- so the try/catch that used to
+  // be here caught nothing and the function returned true whatever happened.
+  // The one line it existed to guard, the one that names the address when no
+  // browser opened, could never print. On a machine with no browser the reader
+  // was told one was opening and then watched nothing happen.
+  const child = spawn(command, args, { detached: true, stdio: 'ignore' });
+  child.on('error', (wrong) => {
+    console.log(`  No browser opened here (${wrong.code ?? wrong.message}). ${url} is waiting.`);
+  });
+  child.unref();
 }
 
 const compose = spawn('docker', ['compose', 'up', '--build'], {
@@ -127,9 +134,7 @@ compose.on('close', (code, signal) => {
       console.log(`  Ready in ${seconds}s:${centres} the interface is on ${SITE}`);
       console.log(open ? `  Opening it. Ctrl+C stops everything.` : `  Ctrl+C stops everything.`);
       console.log('');
-      if (open && !openInBrowser(SITE)) {
-        console.log(`  No browser could be opened here. ${SITE} is waiting.`);
-      }
+      if (open) openInBrowser(SITE);
       return;
     }
 
