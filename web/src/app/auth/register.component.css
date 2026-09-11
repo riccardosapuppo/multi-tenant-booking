@@ -1,0 +1,196 @@
+/* Two columns: why on the left, the form on the right.
+ *
+ * The reason each field exists belongs next to the form rather than under it,
+ * because somebody deciding whether to hand over a tax code decides before
+ * they start typing, not after.
+ */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 19rem) minmax(0, 28rem);
+  gap: 2.5rem;
+  justify-content: center;
+  align-items: start;
+  padding: 2.2rem 1.4rem 3rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 660;
+  letter-spacing: -0.025em;
+}
+
+.why {
+  margin: 0 0 1.2rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* The appointment that sent them here, so the form is visibly a step in
+   something rather than a wall in front of it. */
+.held {
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--role, var(--accent));
+  background: var(--raised);
+  border-radius: 0 10px 10px 0;
+  margin-bottom: 1.3rem;
+}
+
+.held-lead {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.held-what {
+  margin: 0.1rem 0 0.15rem;
+  font-weight: 620;
+  font-size: 0.98rem;
+}
+
+.held-when {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.held-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.invent {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.invent:hover {
+  background: var(--hover);
+  color: var(--ink);
+  border-style: solid;
+}
+
+.invent-why {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------- the form */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+label > span {
+  font-size: 0.85rem;
+  font-weight: 560;
+}
+
+label input {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+  min-width: 0;
+}
+
+label input:focus-visible {
+  outline: 2px solid var(--role, var(--accent));
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+label small {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.problem {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 0.87rem;
+}
+
+.go {
+  margin-top: 0.3rem;
+  padding: 0.72rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--role, var(--accent));
+  color: #fff;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.go:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.go:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.go:focus-visible,
+.invent:focus-visible {
+  outline: 2px solid var(--role, var(--accent));
+  outline-offset: 2px;
+}
+
+.already {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.already a {
+  color: var(--accent);
+}
+
+@media (max-width: 52rem) {
+  .page {
+    grid-template-columns: minmax(0, 30rem);
+    gap: 1.6rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}

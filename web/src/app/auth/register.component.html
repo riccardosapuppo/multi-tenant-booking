@@ -1,0 +1,87 @@
+<section class="page">
+  <div class="intro">
+    <h1>Create an account</h1>
+    <p class="why">
+      One account for the whole platform. What you may do is decided at each centre, so
+      this one starts you as a patient at
+      <strong>{{ session.centreName() ?? 'the centre you chose' }}</strong>.
+    </p>
+
+    @if (pending.slot(); as held) {
+      <div class="held">
+        <p class="held-lead">Waiting for a name</p>
+        <p class="held-what">{{ held.examNames.join(', ') }}</p>
+        <p class="held-when">{{ held.date }} at {{ held.startsAt }} · {{ held.siteName }}</p>
+        <p class="held-note">Nothing is held. It is booked when you confirm it.</p>
+      </div>
+    }
+
+    <button type="button" class="invent" (click)="fillIn()">Fill in invented details</button>
+    <p class="invent-why">
+      Everything in this demonstration is invented, including the centres. This saves you
+      making up a tax code.
+    </p>
+  </div>
+
+  <form class="form" (ngSubmit)="submit()">
+    <div class="pair">
+      <label>
+        <span>First name</span>
+        <input name="given" autocomplete="given-name" [ngModel]="given()" (ngModelChange)="given.set($event)" />
+      </label>
+      <label>
+        <span>Last name</span>
+        <input name="family" autocomplete="family-name" [ngModel]="family()" (ngModelChange)="family.set($event)" />
+      </label>
+    </div>
+
+    <div class="pair">
+      <label>
+        <span>Date of birth</span>
+        <input name="bornOn" type="date" [ngModel]="bornOn()" (ngModelChange)="bornOn.set($event)" />
+        <small>Two people share a name; one of them is eleven.</small>
+      </label>
+      <label>
+        <span>Tax code</span>
+        <input name="taxCode" autocomplete="off" [ngModel]="taxCode()" (ngModelChange)="taxCode.set($event)" />
+        <small>How a health service identifies a patient. Optional here.</small>
+      </label>
+    </div>
+
+    <label>
+      <span>Phone</span>
+      <input name="phone" type="tel" autocomplete="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+      <small>Rung when a scanner breaks and the day has to be rearranged.</small>
+    </label>
+
+    <label>
+      <span>Email</span>
+      <input name="email" type="email" autocomplete="email" [ngModel]="email()" (ngModelChange)="email.set($event)" />
+      <small>You sign in with this.</small>
+    </label>
+
+    <label>
+      <span>Password</span>
+      <input
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+      />
+      <small>At least eight characters.</small>
+    </label>
+
+    @if (problem()) {
+      <p class="problem">{{ problem() }}</p>
+    }
+
+    <button type="submit" class="go" [disabled]="!ready()">
+      {{ working() ? 'Creating…' : pending.slot() ? 'Create account and continue' : 'Create account' }}
+    </button>
+
+    <p class="already">
+      Already have one? <a routerLink="/sign-in">Sign in</a>
+    </p>
+  </form>
+</section>

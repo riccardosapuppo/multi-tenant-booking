@@ -24,7 +24,11 @@ export const centreAndToken: HttpInterceptorFn = (request, next) => {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const centre = session.centre();
-  if (centre && request.url.startsWith('/api/centre')) headers['X-Centre'] = centre;
+  // Everything except the platform console. It used to be only `/api/centre`,
+  // which was right until registering became a thing that happens AT a centre:
+  // the request went to `/api/auth/users`, arrived without a centre, and the
+  // account was created belonging nowhere.
+  if (centre && !request.url.startsWith('/api/platform')) headers['X-Centre'] = centre;
 
   return next(Object.keys(headers).length ? request.clone({ setHeaders: headers }) : request);
 };

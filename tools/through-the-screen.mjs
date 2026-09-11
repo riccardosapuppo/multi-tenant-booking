@@ -72,7 +72,11 @@ async function signOut(page) {
 }
 
 async function switchCentre(page, slug) {
-  await page.selectOption('.centre select', { value: slug });
+  // The centre is chosen from the name in the header rather than from a
+  // separate control in the corner: on a platform serving several of them, the
+  // one you are in is the identity. It is still a real <select>, laid over the
+  // name, which is why this still works by value.
+  await page.selectOption('.switchable select', { value: slug });
   await page.waitForTimeout(700);
 }
 
@@ -118,7 +122,18 @@ try {
   const card = dialog.locator('.day').first();
   const bookedOn = await card.getAttribute('data-date');
   await times.first().click({ force: true });
-  await page.waitForTimeout(1600);
+  await page.waitForTimeout(900);
+
+  // Picking a time no longer books it, and this is where that is proved.
+  // Both halves matter: that the confirmation appears, and that nothing has
+  // been booked while it is on screen. Checking only the first would pass just
+  // as well on a version that books and then shows a receipt.
+  const confirming = page.locator('app-confirm dialog[open]');
+  expect('picking a time asks before it books', (await confirming.count()) === 1);
+  expect('and nothing is booked while it asks', (await page.locator('.done .ref').count()) === 0);
+
+  await confirming.getByRole('button', { name: 'Confirm booking' }).click({ force: true });
+  await page.waitForTimeout(1800);
 
   const reference = (await page.locator('.done .ref').textContent())?.trim() ?? '';
   expect('a reference comes back on screen', /^[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(reference), reference);
@@ -181,6 +196,59 @@ try {
     'and the same person sees nothing of it at the other centre',
     (await page.locator('tr', { hasText: reference }).count()) === 0
   );
+
+  // ----------------------------------------------------------------------
+  // A visitor with no account, which is the journey most people actually make.
+  //
+  // Worth driving end to end rather than asserting in pieces: every step of it
+  // is a place the choice can be dropped, and one of them did drop it -- the
+  // dialog fires `close` however it closes, so leaving to register threw away
+  // the slot that leaving to register exists to carry. The registration page
+  // showed no appointment and nothing else complained.
+  console.log('\nSomebody with no account books');
+
+  await signOut(page);
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.goto(`${BASE}/book`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+
+  expect('a visitor is asked which centre, not for a password', (await page.locator('.choices button').count()) > 0);
+  await page.locator('.choices button').first().click();
+  await page.waitForTimeout(1400);
+
+  expect('and then sees the exams without signing in', (await page.locator('label', { hasText: 'MRI knee' }).count()) > 0);
+  await page.locator('label', { hasText: 'MRI knee' }).first().click();
+  await page.locator('button.search').click({ force: true });
+  await page.waitForTimeout(3000);
+  await page.locator('.times button').first().click({ force: true });
+  await page.waitForTimeout(900);
+
+  const asked = page.locator('app-confirm dialog[open]');
+  expect('picking a time asks who they are', (await asked.count()) === 1);
+  expect(
+    'and says so in those words',
+    ((await asked.locator('.who h2').textContent()) ?? '').includes('needs a name')
+  );
+
+  await asked.getByRole('button', { name: 'Create an account' }).click({ force: true });
+  await page.waitForTimeout(1300);
+
+  expect('the registration page keeps the appointment', (await page.locator('.held').count()) === 1);
+  await page.getByRole('button', { name: 'Fill in invented details' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: /Create account/ }).click({ force: true });
+  await page.waitForTimeout(3500);
+
+  const back = page.locator('app-confirm dialog[open]');
+  expect('and afterwards the same appointment is waiting', (await back.count()) === 1);
+  await back.getByRole('button', { name: 'Confirm booking' }).click({ force: true });
+  await page.waitForTimeout(2000);
+
+  const theirs = (await page.locator('.done .ref').textContent())?.trim() ?? '';
+  expect('booked, in the name they registered with', /^[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(theirs), theirs);
 
   console.log('');
   if (failures > 0) {

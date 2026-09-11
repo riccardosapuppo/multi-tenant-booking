@@ -1,10 +1,13 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { ApiService, Exam, SearchAnswer, SearchDay, Site } from '../shell/api.service';
 import { SessionService } from '../shell/session.service';
+import { PendingService, PickedSlot } from '../shell/pending';
 import { clock, longDate } from '../shell/dates';
 import { ResultsComponent } from './results.component';
+import { ConfirmComponent } from './confirm.component';
 import { IconComponent } from '../shell/icon.component';
 
 /**
@@ -60,10 +63,23 @@ const CATEGORIES = [
 @Component({
   selector: 'app-book',
   standalone: true,
-  imports: [FormsModule, ResultsComponent, IconComponent],
+  imports: [FormsModule, ResultsComponent, ConfirmComponent, IconComponent],
   template: `
+    @if (!session.centre()) {
+      <!-- The first question on a platform serving several centres, and until
+           now nobody without an account was allowed to be asked it. -->
+      <section class="pick-centre">
+        <h2>Which centre?</h2>
+        <p>Prices, opening hours and what can be booked online are each centre's own.</p>
+        <div class="choices">
+          @for (centre of openCentres(); track centre.slug) {
+            <button type="button" (click)="enter(centre)">{{ centre.name }}</button>
+          }
+        </div>
+      </section>
+    } @else {
     <div class="notice">
-      Online booking at <strong>{{ session.centre() }}</strong> is for the exams listed
+      Online booking at <strong>{{ session.centreName() }}</strong> is for the exams listed
       below. Everything here — the centre, the prices, the people — is invented for the
       demonstration.
     </div>
@@ -257,12 +273,29 @@ const CATEGORIES = [
       (closed)="showing.set(false)"
       (chosen)="choose($event.day, $event.time)"
     />
+
+    <!-- Nothing is booked until this is agreed to. -->
+    <app-confirm
+      [open]="confirming()"
+      [slot]="pending.slot()"
+      [accountName]="session.account()?.name ?? ''"
+      [onBehalf]="session.canUseDesk()"
+      [working]="booking()"
+      [problem]="problem()"
+      (cancelled)="stopConfirming()"
+      (confirmed)="confirm($event)"
+      (wantsAccount)="leaveFor('/register')"
+      (wantsSignIn)="leaveFor('/sign-in')"
+    />
+    }
   `,
   styleUrl: './book.component.css',
 })
 export class BookComponent {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   readonly session = inject(SessionService);
+  readonly pending = inject(PendingService);
 
   readonly weekdays = WEEKDAYS;
   readonly parts = PARTS;
@@ -287,6 +320,12 @@ export class BookComponent {
   /** Whether the answer is on screen. Separate from having an answer: the
    * dialog can be closed and reopened without searching again. */
   readonly showing = signal(false);
+
+  /** Whether the confirmation is on screen. */
+  readonly confirming = signal(false);
+
+  /** The centres a visitor may choose between, before they have an account. */
+  readonly openCentres = signal<{ slug: string; name: string }[]>([]);
 
   readonly siteName = computed(() => {
     const id = this.siteId();
@@ -331,15 +370,48 @@ export class BookComponent {
   });
 
   constructor() {
+    /**
+     * Back from registering, with the choice still in hand.
+     *
+     * Somebody who picked 9:20 as a visitor, made an account and returned
+     * should find 9:20 in front of them and one button to press. Landing on an
+     * empty search form instead is the journey asking them to do it twice, and
+     * the second time they know how long it takes.
+     *
+     * Guarded on `restoring`: a token being checked on start means signedIn()
+     * is briefly false while it is, and reopening on the answer to a question
+     * nobody has finished asking would drop the slot a moment later.
+     */
+    effect(() => {
+      if (this.session.restoring()) return;
+      if (this.pending.slot() && this.session.signedIn() && !this.booked()) {
+        this.confirming.set(true);
+      }
+    });
+
+    // Only when there is no centre to be in. Somebody signed in has one from
+    // their grants, and asking the platform for the public list as well would
+    // be a request whose answer is already on screen.
+    effect(() => {
+      if (this.session.centre() || this.openCentres().length > 0) return;
+      this.api.openCentres().subscribe({
+        next: (answer) => this.openCentres.set(answer.centres),
+        error: () => this.problem.set('The list of centres did not load.'),
+      });
+    });
+
     // The price list belongs to the centre, so it is re-read when the centre
     // changes — and everything chosen against the old one is cleared, because
     // an exam id from another centre is either a different exam or nothing.
     effect(() => {
-      this.session.centre();
+      const centre = this.session.centre();
       this.chosen.set([]);
       this.answer.set(null);
       this.showing.set(false);
-      this.load();
+      // Nothing to ask for until there is a centre to ask. A visitor arrives
+      // without one, and these calls went out anyway and came back 400 --
+      // twice, in the console, before the screen had shown them anything.
+      if (centre) this.load();
     });
   }
 
@@ -429,29 +501,108 @@ export class BookComponent {
       });
   }
 
+  /**
+   * Picking a time no longer books it. It opens the confirmation.
+   *
+   * What is kept is everything the confirmation has to show and the booking
+   * call will need -- names included, because the visitor may be about to
+   * leave this screen to make an account, and coming back to a room id is
+   * coming back to nothing anyone can check.
+   */
   choose(day: SearchDay, time: string): void {
-    // Closed the moment a time is picked. Leaving it up while the booking is
-    // in flight invites a second click on a second time.
+    // Closed the moment a time is picked. Leaving it up behind the
+    // confirmation invites a second choice over the top of the first.
     this.showing.set(false);
+    this.problem.set(null);
+
+    const slot: PickedSlot = {
+      centre: this.session.centre() ?? '',
+      roomId: day.roomId,
+      startsAt: time,
+      examIds: this.chosen().map((exam) => exam.id),
+      examNames: this.chosen().map((exam) => exam.name),
+      category: this.category(),
+      date: day.date,
+      siteName: day.siteName,
+      roomName: day.roomName,
+      modality: day.modality,
+      priceCents: day.priceCents,
+    };
+
+    this.pending.hold(slot);
+    this.confirming.set(true);
+  }
+
+  /** Chosen from the list above: the centre this visit is about. */
+  enter(centre: { slug: string; name: string }): void {
+    this.session.visitingName.set(centre.name);
+    this.session.lookAt(centre.slug);
+  }
+
+  /**
+   * Closing the confirmation throws the choice away -- unless the reason it
+   * closed is that we are sending somebody off to get an account.
+   *
+   * `<dialog>` fires `close` however it closes, which is the right design and
+   * was a trap here: `leaveFor` set `confirming` to false, the effect called
+   * `close()`, and the handler dropped the very slot the journey exists to
+   * carry. The registration page then showed no appointment, which is the one
+   * thing it was supposed to show.
+   */
+  private leaving = false;
+
+  stopConfirming(): void {
+    this.confirming.set(false);
+    if (this.leaving) {
+      this.leaving = false;
+      return;
+    }
+    this.pending.drop();
+  }
+
+  /** Off to register or sign in, with the choice kept. */
+  leaveFor(where: string): void {
+    this.leaving = true;
+    this.confirming.set(false);
+    this.router.navigate([where]);
+  }
+
+  /**
+   * Agreed to, and only now booked.
+   *
+   * The name comes from the confirmation rather than from the account: at the
+   * desk the appointment belongs to whoever is standing there. It used to be
+   * the string `Demo Patient` for everybody.
+   */
+  confirm(patientName: string): void {
+    const slot = this.pending.slot();
+    if (!slot) return;
+
     this.booking.set(true);
     this.problem.set(null);
 
     this.api
       .book({
-        roomId: day.roomId,
-        startsAt: time,
-        examIds: this.chosen().map((exam) => exam.id),
-        patientName: this.session.account()?.name ?? 'Demo Patient',
-        category: this.category(),
+        roomId: slot.roomId,
+        startsAt: slot.startsAt,
+        examIds: slot.examIds,
+        patientName,
+        category: slot.category,
       })
       .subscribe({
         next: (made) => {
           this.booking.set(false);
+          this.confirming.set(false);
+          this.pending.drop();
           this.booked.set(made.booking);
         },
         error: (error) => {
           this.booking.set(false);
           if (error.status === 409) {
+            // Taken while this was on screen, which is exactly what a choice
+            // that holds nothing risks. Say so, and show what is left.
+            this.confirming.set(false);
+            this.pending.drop();
             this.problem.set('That time has just been taken. These are the times still free.');
             this.find();
           } else {
@@ -460,6 +611,7 @@ export class BookComponent {
         },
       });
   }
+
 
   startAgain(): void {
     this.booked.set(null);

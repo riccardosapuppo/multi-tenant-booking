@@ -1,0 +1,95 @@
+<dialog #box (close)="cancelled.emit()" (click)="clickedBackdrop($event)">
+  @if (slot(); as picked) {
+    <div class="sheet">
+      <div class="appointment">
+        <p class="lead">You are booking</p>
+
+        <p class="exam">{{ picked.examNames.join(', ') }}</p>
+
+        <div class="when">
+          <span class="num">{{ dayNumber(picked.date) }}</span>
+          <span class="rest">
+            <span class="dow">{{ dayOfWeek(picked.date) }}</span>
+            <span class="mon">{{ monthOf(picked.date) }} {{ yearOf(picked.date) }}</span>
+          </span>
+          <span class="at">{{ clock(picked.startsAt) }}</span>
+        </div>
+
+        <dl class="facts">
+          <div>
+            <dt>Where</dt>
+            <dd>{{ picked.siteName }}</dd>
+          </div>
+          <div>
+            <dt>Room</dt>
+            <dd>{{ picked.roomName }} · {{ picked.modality }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="who">
+        <button type="button" class="shut" (click)="shut()" aria-label="Close">✕</button>
+
+        @if (accountName()) {
+          <h2>{{ onBehalf() ? 'Who is this for?' : 'In your name' }}</h2>
+
+          @if (onBehalf()) {
+            <p class="explain">
+              You are at the desk, so this appointment belongs to the person in front of
+              you rather than to your account.
+            </p>
+            <label class="field">
+              <span>Patient's full name</span>
+              <input
+                name="forWhom"
+                type="text"
+                autocomplete="off"
+                placeholder="As it appears on their documents"
+                [ngModel]="forWhom()"
+                (ngModelChange)="forWhom.set($event)"
+              />
+            </label>
+          } @else {
+            <p class="mine">{{ accountName() }}</p>
+            <p class="explain">
+              The centre will use this to find you at reception, and to reach you if the
+              scanner is moved.
+            </p>
+          }
+
+          @if (problem()) {
+            <p class="problem">{{ problem() }}</p>
+          }
+
+          <p class="cost">
+            <span>{{ money(picked.priceCents) }}</span>
+            <small>{{ category(picked) }} rate, payable at the centre</small>
+          </p>
+
+          <button type="button" class="go" [disabled]="!ready()" (click)="go()">
+            {{ working() ? 'Booking…' : 'Confirm booking' }}
+          </button>
+          <button type="button" class="back" (click)="shut()">Pick another time</button>
+        } @else {
+          <h2>An appointment needs a name</h2>
+          <p class="explain">
+            This time is not held while you decide. Nothing has been booked yet, and your
+            choice above is kept while you make an account.
+          </p>
+
+          <p class="cost">
+            <span>{{ money(picked.priceCents) }}</span>
+            <small>{{ category(picked) }} rate, payable at the centre</small>
+          </p>
+
+          <button type="button" class="go" (click)="wantsAccount.emit()">
+            Create an account
+          </button>
+          <button type="button" class="back" (click)="wantsSignIn.emit()">
+            I already have one
+          </button>
+        }
+      </div>
+    </div>
+  }
+</dialog>

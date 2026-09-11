@@ -90,6 +90,29 @@ export class ApiService {
     return this.http.post('/api/auth/session', { email, password });
   }
 
+  /**
+   * Creating an account, at the centre the interceptor is sending.
+   *
+   * Answers with the same body as signing in, because it also signs you in.
+   * A caller that has just registered should not have to make a second request
+   * to find out what it may now do.
+   */
+  register(body: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    bornOn?: string;
+    taxCode?: string;
+  }): Observable<any> {
+    return this.http.post('/api/auth/users', body);
+  }
+
+  /** The centres to choose between, for somebody who has no account yet. */
+  openCentres(): Observable<{ centres: { slug: string; name: string }[] }> {
+    return this.http.get<{ centres: { slug: string; name: string }[] }>('/api/centres');
+  }
+
   /** Who this token belongs to, and what it may do. Read on every start. */
   me(): Observable<{ user: Account; centres: CentreGrant[]; platformAdmin: boolean }> {
     return this.http.get<{ user: Account; centres: CentreGrant[]; platformAdmin: boolean }>(

@@ -1,0 +1,305 @@
+/* The confirmation, built as an appointment rather than as a form.
+ *
+ * Two halves, one border between them and no shadow on either: they are one
+ * object seen from two sides, not two cards that happen to be adjacent. The
+ * left half is tinted and the right is not, so the eye lands on the thing
+ * being agreed to before it lands on the button that agrees.
+ *
+ * The boldness is spent in exactly one place: the day number. Everything else
+ * is quiet on purpose.
+ */
+
+dialog {
+  border: none;
+  padding: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  width: min(46rem, calc(100vw - 2rem));
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.28);
+}
+
+dialog::backdrop {
+  background: rgb(12 18 24 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.sheet {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: stretch;
+}
+
+/* ------------------------------------------------------------ the appointment */
+
+.appointment {
+  padding: 1.5rem 1.6rem;
+  background: var(--raised);
+  border-right: 1px solid var(--line);
+  border-radius: 14px 0 0 14px;
+}
+
+.lead {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+.exam {
+  margin: 0.15rem 0 1rem;
+  font-size: 1.12rem;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.when {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+/* The one loud thing on the screen. */
+.num {
+  font-size: clamp(2.9rem, 8vw, 3.9rem);
+  font-weight: 700;
+  /* Two fixes for the same thing: 11 was reading as two separate ones.
+     Tabular figures pad every digit to the width of the widest, which on a
+     numeral this size is a visible gap on both sides of a 1. */
+  font-variant-numeric: proportional-nums;
+  letter-spacing: -0.05em;
+  line-height: 0.85;
+  color: var(--role, var(--accent));
+}
+
+.rest {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.dow {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.mon {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.at {
+  margin-left: auto;
+  font-size: 1.5rem;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.facts {
+  margin: 0;
+  padding: 0;
+}
+
+.facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.facts > div:last-child {
+  border-bottom: none;
+}
+
+.facts dt {
+  color: var(--ink-faint);
+  font-size: 0.84rem;
+}
+
+.facts dd {
+  margin: 0;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+/* The price sits with the button rather than in the list of facts: it is the
+   part you are agreeing to, not another attribute of the room. It also gives
+   the right-hand column something to stand on, which is what the empty space
+   above the button was asking for. */
+.cost {
+  margin: auto 0 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.cost span {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--price-ink);
+}
+
+.cost small {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------- the person */
+
+.who {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.6rem;
+}
+
+.shut {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.shut:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.who h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  padding-right: 2rem;
+}
+
+.explain {
+  margin: 0 0 1rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 34ch;
+}
+
+.mine {
+  margin: 0 0 0.3rem;
+  font-size: 1.22rem;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.field span {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.field input {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+}
+
+.field input:focus-visible {
+  outline: 2px solid var(--role, var(--accent));
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.problem {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 9px;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-size: 0.86rem;
+}
+
+.go,
+.back {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.go {
+  padding: 0.7rem 1rem;
+  border: none;
+  background: var(--role, var(--accent));
+  color: #fff;
+  font-size: 0.98rem;
+  font-weight: 620;
+}
+
+.go:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.go:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.back {
+  margin-top: 0.5rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.back:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.go:focus-visible,
+.back:focus-visible,
+.shut:focus-visible {
+  outline: 2px solid var(--role, var(--accent));
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- narrow */
+
+@media (max-width: 40rem) {
+  .sheet {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+  }
+
+  .go {
+    margin-top: 1rem;
+  }
+}

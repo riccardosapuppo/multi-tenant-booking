@@ -37,6 +37,20 @@ const atACentre = () =>
   decide((session) => session.grants().length > 0, '/console');
 
 const atTheDesk = () => decide((session) => session.canUseDesk(), '/book');
+
+/**
+ * Anybody except whoever runs the platform.
+ *
+ * The booking screen used to be behind `signedIn`, and that made the first
+ * thing a visitor met a password box for an account they had no reason to have
+ * yet. Searching for a time is not private -- it is the shop window -- and the
+ * account is needed at the end, to put a name on the appointment, which is
+ * where the confirmation now asks for it.
+ *
+ * The platform administrator is still sent away, for the reason they always
+ * were: they hold no centre, so this screen would open on the word "none".
+ */
+const notThePlatform = () => decide((session) => !session.platformAdmin(), '/console');
 const runsThePlatform = () => decide((session) => session.platformAdmin(), '/book');
 
 /**
@@ -52,8 +66,12 @@ export const ROUTES: Routes = [
     loadComponent: () => import('./auth/sign-in.component').then((m) => m.SignInComponent),
   },
   {
+    path: 'register',
+    loadComponent: () => import('./auth/register.component').then((m) => m.RegisterComponent),
+  },
+  {
     path: 'book',
-    canActivate: [signedIn, atACentre],
+    canActivate: [notThePlatform],
     loadComponent: () => import('./book/book.component').then((m) => m.BookComponent),
   },
   {

@@ -22,6 +22,8 @@ export type Role = 'patient' | 'staff' | 'centre_admin';
 export interface CentreGrant {
   slug: string;
   role: Role;
+  /** What the centre calls itself. The header shows this, not the slug. */
+  name?: string;
 }
 
 export interface Account {
@@ -40,6 +42,23 @@ export class SessionService {
   readonly grants = signal<CentreGrant[]>([]);
   readonly platformAdmin = signal(false);
   readonly centre = signal<string | null>(read(CENTRE_KEY));
+
+  /**
+   * What this centre calls itself, for the places a slug will not do.
+   *
+   * Known once an account's grants have arrived; a visitor who has not signed
+   * in has none, so the booking screen tells us the name it read from the
+   * public list and this holds it. Falls back to the slug rather than to
+   * nothing: a header that goes blank is worse than one saying `northgate`.
+   */
+  readonly visitingName = signal<string | null>(null);
+
+  readonly centreName = computed(() => {
+    const slug = this.centre();
+    if (!slug) return null;
+    const granted = this.grants().find((grant) => grant.slug === slug)?.name;
+    return granted || this.visitingName() || slug;
+  });
 
   readonly signedIn = computed(() => this.token() !== null && this.account() !== null);
 
