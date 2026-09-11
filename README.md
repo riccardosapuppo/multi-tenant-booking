@@ -250,6 +250,14 @@ the header wears, the set of links (not the same links with some hidden: a
 patient has *My bookings*, staff *book for a patient*), and where signing in
 puts you, because staff do not open this to book themselves an appointment.
 
+The colour had to become the band itself. It started as two pixels of rule
+under a white header, then as white tinted 9% towards the role -- and on a page
+that is already near-white, that is a header separated from its own content by
+a border and nothing else. It is a dark band now, tinted a quarter of the way
+towards whichever colour the account is here: four roles, four recognisably
+different headers, and none of them a saturated stripe, because a fully
+role-coloured bar reads as a warning at orange and as a toy at purple.
+
 ## Checking it
 
 ```

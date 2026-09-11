@@ -74,8 +74,15 @@ import { SessionService } from './shell/session.service';
               </label>
             } @else {
               <span class="wordmark">
-                <strong>{{ session.centreName() ?? 'Booking' }}</strong>
-                <span class="what">Booking platform</span>
+                <!-- Whoever runs the platform belongs to no centre, so there is
+                     no name to put on the large line and the product's own goes
+                     there instead -- once. It used to read "Booking" above
+                     "Booking platform", which is a word repeated because a
+                     fallback was written without looking at what it sat above. -->
+                <strong>{{ session.centreName() ?? 'Booking platform' }}</strong>
+                @if (session.centreName()) {
+                  <span class="what">Booking platform</span>
+                }
               </span>
             }
           </div>

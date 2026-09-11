@@ -92,17 +92,37 @@
 }
 
 .top {
-  /* The role is not a two-pixel line any more: it tints the whole band.
-     Signing in as somebody else should be visible from across the room, and a
-     line at the bottom of the header is the one thing nobody looks at. The
-     tint is 7% -- enough to read as a colour, light enough that the text on it
-     is still text on a page. */
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--role) 9%, var(--surface)),
-    color-mix(in srgb, var(--role) 4%, var(--surface))
-  );
-  border-bottom: 1px solid color-mix(in srgb, var(--role) 28%, var(--line));
+  /* A band, not a paler shade of the page.
+   *
+   * The first attempt tinted white with 9% of the role colour, which on a page
+   * that is already near-white left a header separated from its own content by
+   * a one-pixel border and nothing else. A tint that light is a tint nobody
+   * sees: the role was meant to be legible across the room and was legible
+   * only if you went looking for it.
+   *
+   * So the band is dark and the role is what tints it -- a quarter of the way
+   * from slate towards whichever colour this account is here. Four roles, four
+   * recognisably different headers, and none of them a saturated stripe: a
+   * fully role-coloured bar reads as a warning at orange and as a toy at
+   * purple, and this application is neither.
+   */
+  --top-ground: color-mix(in srgb, var(--role) 26%, #16212c);
+  --top-ink: #eff5f8;
+  --top-soft: color-mix(in srgb, var(--top-ink) 66%, transparent);
+  --top-line: color-mix(in srgb, #ffffff 16%, transparent);
+  --top-hover: color-mix(in srgb, #ffffff 11%, transparent);
+
+  background: var(--top-ground);
+  color: var(--top-ink);
+  border-bottom: 1px solid color-mix(in srgb, var(--role) 50%, transparent);
+}
+
+/* On a dark page the band cannot separate by being darker, so it is lighter --
+   the same idea, read the other way round. */
+@media (prefers-color-scheme: dark) {
+  .top {
+    --top-ground: color-mix(in srgb, var(--role) 17%, #222d38);
+  }
 }
 
 .bar {
@@ -154,7 +174,7 @@
 
 .wordmark .what {
   font-size: 0.72rem;
-  color: var(--ink-faint);
+  color: var(--top-soft);
   letter-spacing: 0.005em;
 }
 
@@ -179,16 +199,16 @@
 
 .chev {
   font-size: 0.8em;
-  color: var(--ink-faint);
+  color: var(--top-soft);
   transform: translateY(-0.08em);
 }
 
 .switchable:hover strong {
-  color: var(--role-ink);
+  color: #ffffff;
 }
 
 .switchable:focus-within {
-  outline: 2px solid var(--role);
+  outline: 2px solid var(--top-ink);
   outline-offset: 4px;
   border-radius: 6px;
 }
@@ -202,15 +222,19 @@ nav {
 nav a {
   padding: 0.42rem 0.8rem;
   border-radius: 8px;
-  color: var(--ink-soft);
+  color: var(--top-soft);
   text-decoration: none;
   font-size: 0.92rem;
   white-space: nowrap;
   transition: background 120ms ease, color 120ms ease;
 }
 
-nav a:hover { background: var(--hover); color: var(--ink); }
-nav a.here { background: var(--role-soft); color: var(--role-ink); font-weight: 560; }
+nav a:hover { background: var(--top-hover); color: var(--top-ink); }
+nav a.here {
+  background: color-mix(in srgb, #ffffff 17%, transparent);
+  color: #ffffff;
+  font-weight: 560;
+}
 
 /* Who you are here, said once and plainly.
    It was a word inside the centre selector — "northgate — staff" — which is
@@ -218,9 +242,9 @@ nav a.here { background: var(--role-soft); color: var(--role-ink); font-weight: 
 .badge {
   padding: 0.28rem 0.6rem;
   border-radius: 999px;
-  background: var(--role-soft);
-  color: var(--role-ink);
-  border: 1px solid color-mix(in srgb, var(--role) 35%, transparent);
+  background: color-mix(in srgb, #ffffff 16%, transparent);
+  color: var(--top-ink);
+  border: 1px solid var(--top-line);
   font-size: 0.76rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -252,32 +276,47 @@ nav a.here { background: var(--role-soft); color: var(--role-ink); font-weight: 
 }
 
 .guest {
-  color: var(--ink-soft);
+  color: var(--top-soft);
 }
 
 .guest:hover {
-  background: var(--hover);
-  color: var(--ink);
+  background: var(--top-hover);
+  color: var(--top-ink);
 }
 
+/* White on the band rather than the role colour: a filled button in the same
+   hue as the ground it sits on is a button you have to look for. */
 .joinup {
-  background: var(--role);
-  color: #fff;
-  font-weight: 600;
+  background: var(--top-ink);
+  color: #16212c;
+  font-weight: 640;
 }
 
 .joinup:hover {
-  filter: brightness(1.06);
+  background: #ffffff;
 }
 
 .guest:focus-visible,
 .joinup:focus-visible {
-  outline: 2px solid var(--role);
+  outline: 2px solid var(--top-ink);
   outline-offset: 2px;
 }
 
+/* Sign out is a global quiet button, which is styled for a page and not for a
+   dark band. */
+.who button.quiet {
+  background: transparent;
+  color: var(--top-soft);
+  border-color: var(--top-line);
+}
+
+.who button.quiet:hover:not(:disabled) {
+  background: var(--top-hover);
+  color: var(--top-ink);
+}
+
 .name {
-  color: var(--ink-soft);
+  color: var(--top-soft);
   max-width: 11rem;
   overflow: hidden;
   text-overflow: ellipsis;
