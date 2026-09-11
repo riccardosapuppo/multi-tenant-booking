@@ -35,10 +35,18 @@ const sessions = require('./sessions');
 
 const RANK = { patient: 1, staff: 2, centre_admin: 3 };
 
-/** Everything this account may do, as `{ platformAdmin, byCentre }`. */
+/**
+ * Everything this account may do, as `{ platformAdmin, byCentre, names }`.
+ *
+ * `names` carries what each centre calls itself. It is here rather than in a
+ * second request because the interface puts the centre's name where a product
+ * name usually goes -- on a platform serving several of them, the one you are
+ * looking at is the identity -- and a header that has to wait for a second
+ * round trip shows a slug first and then flickers.
+ */
 async function grantsOf(userId) {
   const { rows } = await sharedPool().query(
-    `SELECT g.role, c.slug
+    `SELECT g.role, c.slug, c.display_name
        FROM grants g
        LEFT JOIN centres c ON c.id = g.centre_id
       WHERE g.user_id = $1`,
@@ -46,6 +54,7 @@ async function grantsOf(userId) {
   );
 
   const byCentre = new Map();
+  const names = new Map();
   let platformAdmin = false;
 
   for (const row of rows) {
@@ -55,9 +64,10 @@ async function grantsOf(userId) {
     }
     const held = byCentre.get(row.slug);
     if (!held || RANK[row.role] > RANK[held]) byCentre.set(row.slug, row.role);
+    names.set(row.slug, row.display_name || row.slug);
   }
 
-  return { platformAdmin, byCentre };
+  return { platformAdmin, byCentre, names };
 }
 
 /**

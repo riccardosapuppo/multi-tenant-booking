@@ -43,6 +43,22 @@ CREATE TABLE IF NOT EXISTS users (
     email          TEXT NOT NULL,
     password_hash  TEXT NOT NULL,
     full_name      TEXT NOT NULL,
+
+    -- What a diagnostic centre needs to know about the person it is expecting,
+    -- and no more than that.
+    --
+    -- The original asked for eight fields here, because an Italian health
+    -- service identifies a patient by tax code and will not accept a booking
+    -- without one. Three of them survive: a number to ring when a scanner
+    -- breaks and the day has to be rearranged, a date of birth because two
+    -- people share a name and one of them is eleven, and the tax code itself.
+    --
+    -- Nullable, because the accounts the demonstration seeds have none, and an
+    -- account that predates a column is not a broken account.
+    phone          TEXT,
+    born_on        DATE,
+    tax_code       TEXT,
+
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT users_email_unique UNIQUE (email)

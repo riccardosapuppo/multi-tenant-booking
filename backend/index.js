@@ -25,6 +25,7 @@ const authRoutes = require('./auth/routes');
 const bookingRoutes = require('./booking/routes');
 const centreRoutes = require('./centre/routes');
 const platformRoutes = require('./platform/routes');
+const publicRoutes = require('./tenants/public');
 const { resolveTenant } = require('./tenants/resolve');
 const { sharedPool, closeAll } = require('./db/pools');
 
@@ -71,6 +72,9 @@ function build() {
 
   api.use(access.identify());
 
+  // Before the platform console, and outside the tenant middleware: the list of
+  // centres is what somebody reads to choose one.
+  api.use('/api', publicRoutes);
   api.use('/api/auth', authRoutes);
   api.use('/api/platform', platformRoutes);
 
