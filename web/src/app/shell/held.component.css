@@ -1,3 +1,15 @@
+/* The host takes no space of its own.
+ *
+ * These pages lay their cards out in a grid, and an empty component is still a
+ * grid item: with nothing held, the sign-in page kept a column for it and
+ * everything else shuffled sideways into what was left. `display: contents`
+ * takes the host out of the layout and lets the block inside be the item, so
+ * the column exists exactly when there is something in it.
+ */
+:host {
+  display: contents;
+}
+
 /* The appointment that sent them here, so the form is visibly a step in
    something rather than a wall in front of it. */
 .held {

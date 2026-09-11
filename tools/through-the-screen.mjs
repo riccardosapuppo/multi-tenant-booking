@@ -323,7 +323,30 @@ try {
     await page.waitForTimeout(2800);
   }
 
+  // Empty first: the component renders nothing without a held time, and an
+  // empty component is still a grid item unless it is told otherwise. The
+  // sign-in page kept a column for it, and everything else shuffled sideways
+  // into what was left.
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.goto(`${BASE}/sign-in`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  expect('with nothing held there is nothing to show', (await page.locator('.held').count()) === 0);
+  expect(
+    'and the empty component takes no room in the layout',
+    (await page.locator('app-held').evaluate((el) => getComputedStyle(el).display)) === 'contents'
+  );
+
   await pickATimeAsAVisitor();
+  // And when there is nothing interrupted, it takes no room.
+  //
+  // The component renders nothing without a held time, but an empty component
+  // is still a grid item: the sign-in page kept a column for it and everything
+  // else shuffled sideways into what was left. Counting the cards is how that
+  // is visible to a check at all.
+  //
   // The interruption shows what it interrupted, and offers the way back.
   // From the sign-in page the only ways out were to finish signing in or to
   // leave: the held time was invisible and there was nothing to press.
