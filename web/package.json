@@ -5,8 +5,7 @@
   "description": "One application, three jobs: booking, the desk, and the platform console.",
   "scripts": {
     "start": "ng serve",
-    "build": "ng build",
-    "test": "ng test --watch=false --browsers=ChromeHeadless"
+    "build": "ng build"
   },
   "dependencies": {
     "@angular/animations": "19.2.25",

@@ -32,3 +32,4 @@ README.md                                # the table that lists them, which is h
 tools/through-the-screen.mjs             # the same, to drive the path through the interface
 tools/who-can-do-what.mjs                # the same, to try every role against what it is promised
 tools/screenshots.mjs                    # the same, to remake the README's figures as each of them
+web/src/app/auth/register.component.ts   # a form control the person fills in, empty in the source
