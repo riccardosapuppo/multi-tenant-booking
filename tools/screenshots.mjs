@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { howToLaunch } from './lib/browser.mjs';
 
 const BASE = process.env.BOOKING_URL || 'http://localhost:4200';
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -42,7 +43,7 @@ const WHO = {
 
 fs.mkdirSync(DOCS, { recursive: true });
 
-const browser = await chromium.launch({ channel: 'msedge' });
+const browser = await chromium.launch(howToLaunch());
 
 /** Motion off and a retina scale: these are read at twice their size on GitHub. */
 async function open(width, height) {

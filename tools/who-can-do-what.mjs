@@ -25,6 +25,7 @@
  */
 
 import { createRequire } from 'node:module';
+import { howToLaunch } from './lib/browser.mjs';
 
 const BASE = process.env.BOOKING_URL || 'http://localhost:4200';
 const show = process.argv.includes('--show');
@@ -132,7 +133,7 @@ async function roleColour(page) {
   });
 }
 
-const browser = await chromium.launch({ channel: 'msedge', headless: !show });
+const browser = await chromium.launch(howToLaunch({ headless: !show }));
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, reducedMotion: 'reduce' });
 
 const colours = new Map();

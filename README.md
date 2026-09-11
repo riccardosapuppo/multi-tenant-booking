@@ -266,7 +266,15 @@ want `playwright-core` on the path; they say so and stop rather than pretending
 to have passed. `check:serving` and `check:mark` do not: one reads response
 headers and the other compares two drawings, and neither needs a browser for
 that. All four are checks rather than dependencies, so none of them is in
-`package.json`.
+`package.json` -- an `npm install` that fetched 300 MB of browser before you
+could run the thing would make the list at the top of this page false.
+
+Which left them run nowhere by default, and a check nobody runs is a paragraph.
+So CI runs them: the job that brings the whole stack up with `docker compose`
+then installs a browser, drives the journey and every role against it, and
+throws the machine away. Locally they drive the Edge that is already on the
+machine; `PLAYWRIGHT_CHANNEL` chooses otherwise, and empty means whatever
+Playwright brought with it, which is what CI sets.
 
 The suite covers the rules (quotas, slot cutting, weekday patterns) and creates
 two centres of its own to check that neither can see the other. Those eight

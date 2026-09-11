@@ -114,6 +114,35 @@ jobs:
           # Two centres named at once is refused, not resolved.
           test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Centre: northgate' 'http://localhost:4200/api/centre/exams?centre=riverside')" = 400
 
+      # The checks that drive a browser, run in the one place where installing
+      # one costs nothing.
+      #
+      # They are not a dependency of this project and should not become one:
+      # the README promises Docker and nothing else, and `npm install`
+      # downloading 300 MB of browser would make that false for everybody who
+      # only wants to run the thing. Locally they use the Edge that is already
+      # on the machine and say so, exiting 2 when there is no Playwright to
+      # drive it -- which is honest, and also means that until now they had
+      # never actually run anywhere. Here the runner installs a browser, runs
+      # them against the stack that is already up, and is thrown away.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.11"
+
+      - name: Get a browser to drive
+        run: |
+          npm install --no-save --no-audit --no-fund playwright-core playwright
+          npx playwright install --with-deps chromium
+
+      - name: The journey through the screen, and what each role may do
+        # Empty means the browser Playwright brought, rather than the Edge this
+        # repository expects on a desk.
+        env:
+          PLAYWRIGHT_CHANNEL: ""
+        run: |
+          node tools/through-the-screen.mjs
+          node tools/who-can-do-what.mjs
+
       - name: What it said, if it failed
         if: failure()
         run: docker compose logs --tail 100
